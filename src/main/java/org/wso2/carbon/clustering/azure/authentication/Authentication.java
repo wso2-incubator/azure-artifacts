@@ -33,7 +33,7 @@ public class Authentication {
         AuthenticationResult result = null;
         ExecutorService service = Executors.newFixedThreadPool(1);
         try {
-            String url = AzureConstants.AUTHORIZATION_ENDPOINT + tenantID + "/oauth2/authorize";
+            String url = AzureConstants.AUTHORIZATION_ENDPOINT + "/" + tenantID + "/oauth2/authorize";
             AuthenticationContext context = new AuthenticationContext(url, validationAuthority, service);
             Future<AuthenticationResult> future;
             if (username == null) {

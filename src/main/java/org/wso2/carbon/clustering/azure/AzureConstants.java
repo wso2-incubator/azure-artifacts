@@ -21,13 +21,14 @@ package org.wso2.carbon.clustering.azure;
  */
 public class AzureConstants {
 
-    public final static String AUTHORIZATION_ENDPOINT = "https://login.microsoftonline.com/"; 
-    public final static String ARM_ENDPOINT = "https://management.azure.com/"; 
-    public final static String NETWORK_INTERFACES_RESOURCE = "%ssubscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/networkSecurityGroups"
-            + "/%s?api-version=2016-03-30";
-    public final static String NETWORK_INTERFACE_RESOURCE = "%ssubscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/networkInterfaces"
-            + "/%s?api-version=2016-03-30";
-    public final static String TAGS_RESOURCE = "%ssubscriptions/%s/resources?$filter=tagname+eq+'%s'&api-version=2015-01-01";
+    public final static String AUTHORIZATION_ENDPOINT = "https://login.microsoftonline.com";
+    public final static String ARM_ENDPOINT = "https://management.azure.com";
+
+    public final static String NETWORK_SECURITY_GROUPS_RESOURCE = "/subscriptions/%s/resourceGroups/%s/providers/" +
+            "Microsoft.Network/networkSecurityGroups/%s?api-version=2016-03-30";
+    public final static String NETWORK_INTERFACES_RESOURCE = "/subscriptions/%s/resourceGroups/%s/providers/" +
+            "Microsoft.Network/networkInterfaces/%s?api-version=2016-03-30";
+    public final static String TAGS_RESOURCE = "/subscriptions/%s/resources?$filter=tagname+eq+'%s'&api-version=2015-01-01";
 
     public final static String AZURE_USERNAME = "azure_username";
     public final static String CREDENTIAL = "credential";
