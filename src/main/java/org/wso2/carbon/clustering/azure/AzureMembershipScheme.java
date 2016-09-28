@@ -115,16 +115,16 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             }
 
             Authentication auth = new Authentication();
-            AuthenticationResult authToken = auth.getAuthToken(username, credential, tenantId, clientId,
+            AuthenticationResult authResult = auth.getAuthToken(username, credential, tenantId, clientId,
                     validationAuthority);
 
             log.info(String.format("Azure clustering configuration: [autherization-endpont] %s , [arm-endpont] %s , " +
                     "[tenant-id] %s , [client-id] %s",
                     AzureConstants.AUTHORIZATION_ENDPOINT, AzureConstants.ARM_ENDPOINT, tenantId, clientId));
 
-            List<String> IPAddresses = findVMIPaddresses(authToken, subscriptionId, resourceGroup,
+            List<String> ipAddresses = findIPAddresses(authResult.getAccessToken(), subscriptionId, resourceGroup,
                     networkSecurityGroup, networkInterfaceTag);
-            for (Object IPAddress : IPAddresses) {
+            for (Object IPAddress : ipAddresses) {
                 nwConfig.getJoin().getTcpIpConfig().addMember(IPAddress.toString());
                 log.info(String.format("Member added to cluster configuration: [IP Address] %s", IPAddress.toString()));
             }
@@ -134,40 +134,40 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
         }
     }
 
-    protected List<String> findVMIPaddresses(AuthenticationResult result, String subscriptionID, String resourceGroup,
-            String networkSecurityGroup, String networkInterfaceTag) throws AzureMembershipSchemeException {
+    protected List<String> findIPAddresses(String accessToken, String subscriptionID, String resourceGroup,
+                                           String networkSecurityGroup, String networkInterfaceTag)
+            throws AzureMembershipSchemeException {
 
+        InputStream inputStream;
         List<String> ipAddresses = new ArrayList<>();
-        InputStream instream;
         ObjectMapper objectMapper = new ObjectMapper();
 
-        if (networkInterfaceTag==null) {
+        if (networkInterfaceTag == null) {
             // list NICs grouped in the specified network security group
             String url = AzureConstants.ARM_ENDPOINT + String.format(AzureConstants.NETWORK_SECURITY_GROUPS_RESOURCE,
                     subscriptionID, resourceGroup, networkSecurityGroup);
-            instream = getAPIresponse(url, result);
+            inputStream = invokeGetMethod(url, accessToken);
 
             try {
-                NetworkSecurityGroup nsg = objectMapper.readValue(instream, NetworkSecurityGroup.class);
+                NetworkSecurityGroup nsg = objectMapper.readValue(inputStream, NetworkSecurityGroup.class);
                 List ninames = nsg.getProperties().getNetworkInterfaceNames();
 
                 for (Object niname : ninames) {
                     url = AzureConstants.ARM_ENDPOINT + String.format(AzureConstants.NETWORK_INTERFACES_RESOURCE,
                             subscriptionID, resourceGroup, niname);
-                    instream = getAPIresponse(url, result);
-                    NetworkInterface ni = objectMapper.readValue(instream, NetworkInterface.class);
+                    inputStream = invokeGetMethod(url, accessToken);
+                    NetworkInterface ni = objectMapper.readValue(inputStream, NetworkInterface.class);
                     ipAddresses.add(ni.getProperties().getIPAddress());
                 }
             } catch (IOException ex) {
                 throw new AzureMembershipSchemeException("Could not find VM IP addresses", ex);
             }
-        } else if (networkSecurityGroup==null) { //List NICs according to the tags
+        } else if (networkSecurityGroup == null) { //List NICs according to the tags
             try {
                 String url = AzureConstants.ARM_ENDPOINT + String.format(AzureConstants.TAGS_RESOURCE,
                         subscriptionID, networkInterfaceTag);
-                //String body= inputStreamToString(getAPIresponse(url, result));
-                JSONObject root1 = new JSONObject(inputStreamToString(getAPIresponse(url, result)));
-                JSONArray values = root1.getJSONArray("value");
+                JSONObject rootElement = new JSONObject(inputStreamToString(invokeGetMethod(url, accessToken)));
+                JSONArray values = rootElement.getJSONArray("value");
                 List<String> ninames = new ArrayList<>();
                 for (int i = 0; i < values.length(); i++) {
                     JSONObject firstelement = values.getJSONObject(i);
@@ -179,8 +179,8 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
                 for (Object niname : ninames) {
                     url = AzureConstants.ARM_ENDPOINT + String.format(AzureConstants.NETWORK_INTERFACES_RESOURCE,
                             subscriptionID, resourceGroup, niname);
-                    instream = getAPIresponse(url, result);
-                    NetworkInterface ni = objectMapper.readValue(instream, NetworkInterface.class);
+                    inputStream = invokeGetMethod(url, accessToken);
+                    NetworkInterface ni = objectMapper.readValue(inputStream, NetworkInterface.class);
                     ipAddresses.add(ni.getProperties().getIPAddress());
                 }
             } catch (IOException ex) {
@@ -193,22 +193,21 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
         return ipAddresses;
     }
 
-    public InputStream getAPIresponse(String url, AuthenticationResult result) throws AzureMembershipSchemeException {
+    public InputStream invokeGetMethod(String url, String accessToken) throws AzureMembershipSchemeException {
 
-        InputStream instream;
+        InputStream inputStream;
         try {
             final HttpClient httpClient = new DefaultHttpClient();
-            HttpConnectionParams
-                    .setConnectionTimeout(httpClient.getParams(), 10000);
+            HttpConnectionParams.setConnectionTimeout(httpClient.getParams(), 10000);
             HttpGet httpGet = new HttpGet(url);
-            httpGet.addHeader("Authorization", "Bearer " + result.getAccessToken());
+            httpGet.addHeader("Authorization", "Bearer " + accessToken);
             HttpResponse response = httpClient.execute(httpGet);
             HttpEntity entity = response.getEntity();
-            instream = entity.getContent();
+            inputStream = entity.getContent();
         } catch (Exception ex) {
             throw new AzureMembershipSchemeException("Could not connect to Azure API", ex);
         }
-        return instream;
+        return inputStream;
     }
 
     public void joinGroup() throws ClusteringFault {
