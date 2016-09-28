@@ -25,20 +25,16 @@ import java.util.concurrent.Future;
 
 public class Authentication {
 
-    public AuthenticationResult getAuthToken(String authEndpoint, String armEndpoint, 
+    public AuthenticationResult getAuthToken(String authEndpoint, String armEndpoint,
             String username, String credentials, String tenantID, String clientID, 
             boolean validationAuthority) throws AzureMembershipSchemeException {
 
-        AuthenticationContext context = null;
         AuthenticationResult result = null;
-        ExecutorService service = null;
-        String url = null;
-
-        service = Executors.newFixedThreadPool(1);
+        ExecutorService service = Executors.newFixedThreadPool(1);
         try {
-            url = authEndpoint + tenantID + "/oauth2/authorize";
-            context = new AuthenticationContext(url, validationAuthority, service);
-            Future<AuthenticationResult> future = null;
+            String url = authEndpoint + tenantID + "/oauth2/authorize";
+            AuthenticationContext context = new AuthenticationContext(url, validationAuthority, service);
+            Future<AuthenticationResult> future;
             if (username == null) {
                 ClientCredential cred = new ClientCredential(clientID, credentials);
                 future = context.acquireToken(armEndpoint, cred, null);
@@ -47,7 +43,6 @@ public class Authentication {
             }
             result = future.get();
         } catch (Exception ex) {
-
             throw new AzureMembershipSchemeException("Could not connect to Azure API", ex);
         } finally {
             service.shutdown();

@@ -138,14 +138,13 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             String armEndpoint, String subscriptionID, String resourceGroup,
             String networkSecurityGroup, String networkInterfaceTag) throws AzureMembershipSchemeException {
 
-        List<String> ipAddresses = new ArrayList<String>();
-        String url = null;
-        InputStream instream = null;
+        List<String> ipAddresses = new ArrayList<>();
+        InputStream instream;
         ObjectMapper objectMapper = new ObjectMapper();
 
         if (networkInterfaceTag==null) {
             // list NICs grouped in the specified network security group
-            url = String.format(AzureConstants.NETWORK_INTERFACES_RESOURCE, armEndpoint, subscriptionID, resourceGroup, networkSecurityGroup);
+            String url = String.format(AzureConstants.NETWORK_INTERFACES_RESOURCE, armEndpoint, subscriptionID, resourceGroup, networkSecurityGroup);
             instream = getAPIresponse(url, result);
 
             try {
@@ -163,11 +162,11 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             }
         } else if (networkSecurityGroup==null) { //List NICs according to the tags
             try {
-                url = String.format(AzureConstants.TAGS_RESOURCE, armEndpoint, subscriptionID, networkInterfaceTag);
+                String url = String.format(AzureConstants.TAGS_RESOURCE, armEndpoint, subscriptionID, networkInterfaceTag);
                 //String body= inputStreamToString(getAPIresponse(url, result));
                 JSONObject root1 = new JSONObject(inputStreamToString(getAPIresponse(url, result)));
                 JSONArray values = root1.getJSONArray("value");
-                List<String> ninames = new ArrayList<String>();
+                List<String> ninames = new ArrayList<>();
                 for (int i = 0; i < values.length(); i++) {
                     JSONObject firstelement = values.getJSONObject(i);
                     Object name = firstelement.get("name");
@@ -193,7 +192,7 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
 
     public InputStream getAPIresponse(String url, AuthenticationResult result) throws AzureMembershipSchemeException {
 
-        InputStream instream = null;
+        InputStream instream;
         try {
             final HttpClient httpClient = new DefaultHttpClient();
             HttpConnectionParams
@@ -237,16 +236,13 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
     }
 
     public String inputStreamToString(InputStream instream) throws IOException {
-        String body = null;
         StringBuilder sb = new StringBuilder();
         BufferedReader r = new BufferedReader(new InputStreamReader(instream), 1000);
         for (String line = r.readLine(); line != null; line = r.readLine()) {
             sb.append(line);
         }
         instream.close();
-        body = sb.toString();
-
-        return body;
+        return sb.toString();
     }
 
     private class AzureMembershipSchemeListener implements MembershipListener {

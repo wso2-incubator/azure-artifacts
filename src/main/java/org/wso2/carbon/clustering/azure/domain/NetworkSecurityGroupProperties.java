@@ -40,7 +40,7 @@ public class NetworkSecurityGroupProperties {
     public List getNetworkInterfaceNames() {
         StringTokenizer[] st = new StringTokenizer[networkInterfaces.size()];
         String[] NICname = new String[networkInterfaces.size()];
-        List<String> names = new ArrayList<String>();
+        List<String> names = new ArrayList<>();
         for (int i = 0; i < networkInterfaces.size(); i++) {
             st[i] = new StringTokenizer(networkInterfaces.get(i).toString(), "/");
             while (st[i].hasMoreTokens()) {
