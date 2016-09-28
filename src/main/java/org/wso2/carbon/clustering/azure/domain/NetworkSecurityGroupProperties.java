@@ -39,16 +39,16 @@ public class NetworkSecurityGroupProperties {
 
     public List getNetworkInterfaceNames() {
         StringTokenizer[] st = new StringTokenizer[networkInterfaces.size()];
-        String[] NICname = new String[networkInterfaces.size()];
-        List<String> names = new ArrayList<>();
+        String nicName = "";
+        List<String> nicNames = new ArrayList<>();
         for (int i = 0; i < networkInterfaces.size(); i++) {
             st[i] = new StringTokenizer(networkInterfaces.get(i).toString(), "/");
             while (st[i].hasMoreTokens()) {
-                NICname[i] = st[i].nextToken();
+                nicName = st[i].nextToken();
             }
-            NICname[i] = NICname[i].substring(0, NICname[i].length() - 1);
-            names.add(NICname[i]);
+            nicName = nicName.substring(0, nicName.length() - 1);
+            nicNames.add(nicName);
         }
-        return names;
+        return nicNames;
     }
 }
