@@ -122,8 +122,8 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             log.info(String.format("Azure clustering configuration: [autherization-endpont] %s , [arm-endpont] %s , [tenant-id] %s , [client-id] %s",
                     AzureConstants.AUTHORIZATION_ENDPOINT, AzureConstants.ARM_ENDPOINT, tenantId, clientId));
 
-            List IPAddresses = new ArrayList(findVMIPaddresses(authToken, AzureConstants.ARM_ENDPOINT, subscriptionId, resourceGroup,
-                    networkSecurityGroup, networkInterfaceTag));
+            List<String> IPAddresses = findVMIPaddresses(authToken, AzureConstants.ARM_ENDPOINT, subscriptionId, resourceGroup,
+                    networkSecurityGroup, networkInterfaceTag);
             for (Object IPAddress : IPAddresses) {
                 nwConfig.getJoin().getTcpIpConfig().addMember(IPAddress.toString());
                 log.info(String.format("Member added to cluster configuration: [IP Address] %s", IPAddress.toString()));
@@ -138,7 +138,7 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             String armEndpoint, String subscriptionID, String resourceGroup,
             String networkSecurityGroup, String networkInterfaceTag) throws AzureMembershipSchemeException {
 
-        List IPAddresses = new ArrayList();
+        List<String> ipAddresses = new ArrayList<String>();
         String url = null;
         InputStream instream = null;
         ObjectMapper objectMapper = new ObjectMapper();
@@ -156,7 +156,7 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
                     url = String.format(AzureConstants.NETWORK_INTERFACE_RESOURCE, armEndpoint, subscriptionID, resourceGroup, niname);
                     instream = getAPIresponse(url, result);
                     NetworkInterface ni = objectMapper.readValue(instream, NetworkInterface.class);
-                    IPAddresses.add(ni.getProperties().getIPAddress());
+                    ipAddresses.add(ni.getProperties().getIPAddress());
                 }
             } catch (IOException ex) {
                 throw new AzureMembershipSchemeException("Could not find VM IP addresses", ex);
@@ -167,17 +167,19 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
                 //String body= inputStreamToString(getAPIresponse(url, result));
                 JSONObject root1 = new JSONObject(inputStreamToString(getAPIresponse(url, result)));
                 JSONArray values = root1.getJSONArray("value");
-                List ninames = new ArrayList();
+                List<String> ninames = new ArrayList<String>();
                 for (int i = 0; i < values.length(); i++) {
                     JSONObject firstelement = values.getJSONObject(i);
                     Object name = firstelement.get("name");
-                    ninames.add(name);
+                    if((name != null) && StringUtils.isNotEmpty(name.toString())) {
+                        ninames.add(name.toString());
+                    }
                 }
                 for (Object niname : ninames) {
                     url = String.format(AzureConstants.NETWORK_INTERFACE_RESOURCE, armEndpoint, subscriptionID, resourceGroup, niname);
                     instream = getAPIresponse(url, result);
                     NetworkInterface ni = objectMapper.readValue(instream, NetworkInterface.class);
-                    IPAddresses.add(ni.getProperties().getIPAddress());
+                    ipAddresses.add(ni.getProperties().getIPAddress());
                 }
             } catch (IOException ex) {
                 throw new AzureMembershipSchemeException("Could not find VM IP addresses", ex);
@@ -186,7 +188,7 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             throw new AzureMembershipSchemeException("EITHER networkSecurityGroup OR networkInterfaceTag "
                     + "must be chosen as the grouping method; not both of them");
         }
-        return IPAddresses;
+        return ipAddresses;
     }
 
     public InputStream getAPIresponse(String url, AuthenticationResult result) throws AzureMembershipSchemeException {
@@ -201,7 +203,6 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             HttpResponse response = httpClient.execute(httpGet);
             HttpEntity entity = response.getEntity();
             instream = entity.getContent();
-
         } catch (Exception ex) {
             throw new AzureMembershipSchemeException("Could not connect to Azure API", ex);
         }
