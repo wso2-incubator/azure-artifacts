@@ -116,8 +116,8 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             }
 
             Authentication auth = new Authentication();
-            AuthenticationResult authToken = auth.getAuthToken(AzureConstants.AUTHORIZATION_ENDPOINT, AzureConstants.ARM_ENDPOINT,
-                    username, credential, tenantId, clientId, validationAuthority);
+            AuthenticationResult authToken = auth.getAuthToken(username, credential, tenantId, clientId,
+                    validationAuthority);
 
             log.info(String.format("Azure clustering configuration: [autherization-endpont] %s , [arm-endpont] %s , [tenant-id] %s , [client-id] %s",
                     AzureConstants.AUTHORIZATION_ENDPOINT, AzureConstants.ARM_ENDPOINT, tenantId, clientId));
