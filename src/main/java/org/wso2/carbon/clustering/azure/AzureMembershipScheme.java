@@ -141,10 +141,11 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
         List<String> ipAddresses = new ArrayList<>();
         ObjectMapper objectMapper = new ObjectMapper();
 
-        if (networkInterfaceTag == null) {
-            // list NICs grouped in the specified network security group
+        if ((StringUtils.isNotEmpty(networkSecurityGroup)) && (StringUtils.isEmpty(networkInterfaceTag))) {
+            // Find ip addresses based on network security group
             String url = AzureConstants.ARM_ENDPOINT + String.format(AzureConstants.NETWORK_SECURITY_GROUPS_RESOURCE,
                     subscriptionID, resourceGroup, networkSecurityGroup);
+            // Get network security group
             inputStream = invokeGetMethod(url, accessToken);
 
             try {
@@ -152,6 +153,7 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
                 List ninames = nsg.getProperties().getNetworkInterfaceNames();
 
                 for (Object niname : ninames) {
+                    // Get network interface by network interface name
                     url = AzureConstants.ARM_ENDPOINT + String.format(AzureConstants.NETWORK_INTERFACES_RESOURCE,
                             subscriptionID, resourceGroup, niname);
                     inputStream = invokeGetMethod(url, accessToken);
@@ -161,10 +163,12 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             } catch (IOException ex) {
                 throw new AzureMembershipSchemeException("Could not find VM IP addresses", ex);
             }
-        } else if (networkSecurityGroup == null) { //List NICs according to the tags
+        } else if ((StringUtils.isNotEmpty(networkInterfaceTag)) && (StringUtils.isEmpty(networkSecurityGroup))) {
             try {
+                // Find ip addresses based on network interface tag
                 String url = AzureConstants.ARM_ENDPOINT + String.format(AzureConstants.TAGS_RESOURCE,
                         subscriptionID, networkInterfaceTag);
+                // Get tag resource
                 JSONObject rootElement = new JSONObject(inputStreamToString(invokeGetMethod(url, accessToken)));
                 JSONArray values = rootElement.getJSONArray("value");
                 List<String> ninames = new ArrayList<>();
@@ -176,6 +180,7 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
                     }
                 }
                 for (Object niname : ninames) {
+                    // Get network interface by network interface name
                     url = AzureConstants.ARM_ENDPOINT + String.format(AzureConstants.NETWORK_INTERFACES_RESOURCE,
                             subscriptionID, resourceGroup, niname);
                     inputStream = invokeGetMethod(url, accessToken);
