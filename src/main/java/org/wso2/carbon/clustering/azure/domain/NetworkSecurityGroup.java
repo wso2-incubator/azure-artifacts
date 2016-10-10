@@ -25,7 +25,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class NetworkSecurityGroup {
 
     private NetworkSecurityGroupProperties properties;
-    //private String name;
 
     public NetworkSecurityGroupProperties getProperties() {
         return properties;

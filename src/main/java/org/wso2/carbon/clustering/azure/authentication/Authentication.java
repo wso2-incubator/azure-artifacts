@@ -26,7 +26,7 @@ import java.util.concurrent.Future;
 
 public class Authentication {
 
-    public AuthenticationResult getAuthToken(
+    public static AuthenticationResult getAuthToken(
             String username, String credentials, String tenantID, String clientID, 
             boolean validationAuthority) throws AzureMembershipSchemeException {
 
