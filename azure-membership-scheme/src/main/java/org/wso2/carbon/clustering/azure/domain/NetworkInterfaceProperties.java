@@ -15,9 +15,6 @@
  */
 package org.wso2.carbon.clustering.azure.domain;
 
-import java.util.List;
-import java.util.StringTokenizer;
-
 /**
  * Azure NetworkSecurityGroup NetworkInterface NetworkInterfaceProperties
  */

@@ -17,8 +17,6 @@ package org.wso2.carbon.clustering.azure;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.config.TcpIpConfig;
@@ -57,7 +55,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -114,12 +111,14 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
                     .parseBoolean(getConstant(AzureConstants.VALIDATION_AUTHORITY, "false", true));
 
             if (networkInterfaceTag == null && networkSecurityGroup == null && virtualMachineScaleSet == null) {
-                throw new ClusteringFault(String.format("The parameters %s, %s and %s are empty. Define at least one "
-                        + "of them", AzureConstants.NETWORK_SECURITY_GROUP, AzureConstants
-                        .NETWORK_INTERFACE_TAG, AzureConstants.VIRTUAL_MACHINE_SCALE_SET));
+                throw new ClusteringFault(
+                        String.format("The parameters %s, %s and %s are empty. Define at least one " + "of them",
+                                AzureConstants.NETWORK_SECURITY_GROUP, AzureConstants.NETWORK_INTERFACE_TAG,
+                                AzureConstants.VIRTUAL_MACHINE_SCALE_SET));
             }
 
-            AuthenticationResult authResult = Authentication.getAuthToken(username, credential, tenantId, clientId, validationAuthority);
+            AuthenticationResult authResult = Authentication
+                    .getAuthToken(username, credential, tenantId, clientId, validationAuthority);
             log.info(String.format("Azure clustering configuration: [authorization-endpoint] %s , [arm-endpoint] %s , "
                             + "[tenant-id] %s , [client-id] %s", AzureConstants.AUTHORIZATION_ENDPOINT,
                     AzureConstants.ARM_ENDPOINT, tenantId, clientId));
@@ -143,11 +142,12 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
         List<String> ipAddresses = new ArrayList<>();
         Gson gson = new GsonBuilder().create();
 
-        if ((StringUtils.isNotEmpty(networkSecurityGroup)) && (StringUtils.isEmpty(networkInterfaceTag)) &&
-                (StringUtils.isEmpty(virtualMachineScaleSet))) {
+        if ((StringUtils.isNotEmpty(networkSecurityGroup)) && (StringUtils.isEmpty(networkInterfaceTag)) && (StringUtils
+                .isEmpty(virtualMachineScaleSet))) {
             // Find ip addresses based on network security group
-            String url = AzureConstants.ARM_ENDPOINT + String.format(AzureConstants.NETWORK_SECURITY_GROUPS_RESOURCE,
-                    subscriptionID, resourceGroup, networkSecurityGroup);
+            String url = AzureConstants.ARM_ENDPOINT + String
+                    .format(AzureConstants.NETWORK_SECURITY_GROUPS_RESOURCE, subscriptionID, resourceGroup,
+                            networkSecurityGroup);
             try {
 
                 // Get network security group
@@ -161,15 +161,15 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
                             .format(AzureConstants.NETWORK_INTERFACES_RESOURCE, subscriptionID, resourceGroup, niname);
                     NetworkInterface networkInterface = gson
                             .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)), NetworkInterface.class);
-                    for(IPConfiguration ipConfig: networkInterface.getProperties().getIpConfigurations()){
+                    for (IPConfiguration ipConfig : networkInterface.getProperties().getIpConfigurations()) {
                         ipAddresses.add(ipConfig.getIpConfigurationProperties().getPrivateIPAddress());
                     }
                 }
             } catch (IOException ex) {
                 throw new AzureMembershipSchemeException("Could not find VM IP addresses", ex);
             }
-        } else if ((StringUtils.isNotEmpty(networkInterfaceTag)) && (StringUtils.isEmpty(networkSecurityGroup)) &&
-                (StringUtils.isEmpty(virtualMachineScaleSet))) {
+        } else if ((StringUtils.isNotEmpty(networkInterfaceTag)) && (StringUtils.isEmpty(networkSecurityGroup))
+                && (StringUtils.isEmpty(virtualMachineScaleSet))) {
             try {
                 // Find ip addresses based on network interface tag
                 String url = AzureConstants.ARM_ENDPOINT + String
@@ -193,22 +193,24 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
                             .format(AzureConstants.NETWORK_INTERFACES_RESOURCE, subscriptionID, resourceGroup, niname);
                     NetworkInterface networkInterface = gson
                             .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)), NetworkInterface.class);
-                    for(IPConfiguration ipConfig: networkInterface.getProperties().getIpConfigurations()){
+                    for (IPConfiguration ipConfig : networkInterface.getProperties().getIpConfigurations()) {
                         ipAddresses.add(ipConfig.getIpConfigurationProperties().getPrivateIPAddress());
                     }
                 }
             } catch (IOException ex) {
                 throw new AzureMembershipSchemeException("Could not find VM IP addresses", ex);
             }
-        } else if ((StringUtils.isNotEmpty(virtualMachineScaleSet)) && (StringUtils.isEmpty(networkInterfaceTag)) &&
-                (StringUtils.isEmpty(networkSecurityGroup))) {
+        } else if ((StringUtils.isNotEmpty(virtualMachineScaleSet)) && (StringUtils.isEmpty(networkInterfaceTag))
+                && (StringUtils.isEmpty(networkSecurityGroup))) {
             try {
                 // Find IP addresses based on virtual machine scale set
 
                 // Get virtual machines belongs to a specific virtualMachineScaleSet
-                String url = AzureConstants.ARM_ENDPOINT + String.format(AzureConstants
-                        .VIRTUAL_MACHINE_SCALE_SET_VIRTUAL_MACHINES_RESOURCE, subscriptionID, resourceGroup, virtualMachineScaleSet);
-                VirtualMachines virtualMachines = gson.fromJson(inputStreamToString(invokeGetMethod(url, accessToken)), VirtualMachines.class);
+                String url = AzureConstants.ARM_ENDPOINT + String
+                        .format(AzureConstants.VIRTUAL_MACHINE_SCALE_SET_VIRTUAL_MACHINES_RESOURCE, subscriptionID,
+                                resourceGroup, virtualMachineScaleSet);
+                VirtualMachines virtualMachines = gson
+                        .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)), VirtualMachines.class);
 
                 for (VirtualMachine virtualMachine : virtualMachines.getValue()) {
                     //  Get virtual machine IP address
@@ -218,10 +220,11 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
                                 .format(AzureConstants.VIRTUAL_MACHINE_SCALE_SET_NETWORK_INTERFACES_RESOURCE,
                                         subscriptionID, resourceGroup, virtualMachineScaleSet,
                                         virtualMachine.getInstanceId(), nwInterface.getName());
-                        NetworkInterface networkInterface = gson.fromJson(inputStreamToString(invokeGetMethod(url, accessToken)),
-                                NetworkInterface.class);
+                        NetworkInterface networkInterface = gson
+                                .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)),
+                                        NetworkInterface.class);
 
-                        for(IPConfiguration ipConfig: networkInterface.getProperties().getIpConfigurations()){
+                        for (IPConfiguration ipConfig : networkInterface.getProperties().getIpConfigurations()) {
                             ipAddresses.add(ipConfig.getIpConfigurationProperties().getPrivateIPAddress());
                         }
 

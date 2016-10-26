@@ -21,8 +21,7 @@ import com.google.gson.annotations.SerializedName;
  * Azure Virtual Machine Scale Set
  */
 public class VirtualMachines {
-    @SerializedName("value")
-    private VirtualMachine[] virtualMachines;
+    @SerializedName("value") private VirtualMachine[] virtualMachines;
 
     public VirtualMachine[] getValue() {
         return virtualMachines;

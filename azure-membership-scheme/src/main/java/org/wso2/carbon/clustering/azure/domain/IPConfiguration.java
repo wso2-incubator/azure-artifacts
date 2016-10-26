@@ -15,20 +15,17 @@
  */
 package org.wso2.carbon.clustering.azure.domain;
 
-import com.google.gson.annotations.SerializedName;
-
 /**
  * Azure IP Configuration resource
  */
 public class IPConfiguration {
-    @SerializedName("ipConfigurations")
-    private IPConfigurationProperties ipConfigurationProperties;
+    private IPConfigurationProperties properties;
 
     public IPConfigurationProperties getIpConfigurationProperties() {
-        return ipConfigurationProperties;
+        return properties;
     }
 
-    public void setIpConfigurationProperties(IPConfigurationProperties ipConfigurationProperties) {
-        this.ipConfigurationProperties = ipConfigurationProperties;
+    public void setIpConfigurationProperties(IPConfigurationProperties properties) {
+        this.properties = properties;
     }
 }
