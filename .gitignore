@@ -25,6 +25,13 @@ nbdist/
 nbactions.xml
 nb-configuration.xml
 
+# IntelliJ IDEA Project Files
+.idea/
+*.iml
+*.ipr
+*.iws
+*.swp
+
 # Class Files #
 *.class
 
@@ -32,4 +39,5 @@ nb-configuration.xml
 *.jar
 *.war
 *.ear
-/target/
+
+target/

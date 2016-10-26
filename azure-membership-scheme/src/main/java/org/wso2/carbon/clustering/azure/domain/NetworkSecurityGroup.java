@@ -15,13 +15,9 @@
  */
 package org.wso2.carbon.clustering.azure.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 /**
- *
  * Azure NetworkSecurityGroup
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class NetworkSecurityGroup {
 
     private NetworkSecurityGroupProperties properties;

@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wso2.carbon.clustering.azure.exceptions;
+package org.wso2.carbon.clustering.azure.domain;
 
 /**
- * Azure membership scheme exception
+ * Azure Virtual Machine properties
  */
-public class AzureMembershipSchemeException extends Exception {
+public class VirtualMachineProperties {
+    private NetworkProfile networkProfile;
 
-    public AzureMembershipSchemeException(String message) {
-        super(message);
+    public NetworkProfile getNetworkProfile() {
+        return networkProfile;
     }
 
-    public AzureMembershipSchemeException(String message, Throwable cause) {
-        super(message, cause);
+    public void setNetworkProfile(NetworkProfile networkProfile) {
+        this.networkProfile = networkProfile;
     }
 }

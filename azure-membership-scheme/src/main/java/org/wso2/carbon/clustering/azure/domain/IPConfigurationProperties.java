@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wso2.carbon.clustering.azure.exceptions;
+package org.wso2.carbon.clustering.azure.domain;
 
 /**
- * Azure membership scheme exception
+ * Azure IP Configuration properties
  */
-public class AzureMembershipSchemeException extends Exception {
+public class IPConfigurationProperties {
+    private String privateIPAddress;
 
-    public AzureMembershipSchemeException(String message) {
-        super(message);
+    public String getPrivateIPAddress() {
+        return privateIPAddress;
     }
 
-    public AzureMembershipSchemeException(String message, Throwable cause) {
-        super(message, cause);
+    public void setPrivateIPAddress(String privateIPAddress) {
+        this.privateIPAddress = privateIPAddress;
     }
 }

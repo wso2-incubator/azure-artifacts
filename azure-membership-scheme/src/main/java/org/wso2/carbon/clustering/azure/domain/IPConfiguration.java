@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wso2.carbon.clustering.azure.exceptions;
+package org.wso2.carbon.clustering.azure.domain;
+
+import com.google.gson.annotations.SerializedName;
 
 /**
- * Azure membership scheme exception
+ * Azure IP Configuration resource
  */
-public class AzureMembershipSchemeException extends Exception {
+public class IPConfiguration {
+    @SerializedName("ipConfigurations")
+    private IPConfigurationProperties ipConfigurationProperties;
 
-    public AzureMembershipSchemeException(String message) {
-        super(message);
+    public IPConfigurationProperties getIpConfigurationProperties() {
+        return ipConfigurationProperties;
     }
 
-    public AzureMembershipSchemeException(String message, Throwable cause) {
-        super(message, cause);
+    public void setIpConfigurationProperties(IPConfigurationProperties ipConfigurationProperties) {
+        this.ipConfigurationProperties = ipConfigurationProperties;
     }
 }

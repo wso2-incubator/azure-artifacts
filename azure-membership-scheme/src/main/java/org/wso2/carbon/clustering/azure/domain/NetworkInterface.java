@@ -15,17 +15,33 @@
 */
 package org.wso2.carbon.clustering.azure.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 /**
- *
  * Azure Network Security Group Network Interface
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class NetworkInterface {
-
+    private String id;
+    private String name;
     private NetworkInterfaceProperties properties;
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        if (name == null) {
+            String[] temp = this.id.split("/");
+            name = temp[temp.length - 1];
+        }
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public NetworkInterfaceProperties getProperties() {
         return properties;

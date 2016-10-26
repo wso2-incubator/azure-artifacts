@@ -16,7 +16,6 @@
 package org.wso2.carbon.clustering.azure;
 
 /**
- *
  * AzureConstants for Azure membership scheme
  */
 public class AzureConstants {
@@ -24,11 +23,17 @@ public class AzureConstants {
     public final static String AUTHORIZATION_ENDPOINT = "https://login.microsoftonline.com";
     public final static String ARM_ENDPOINT = "https://management.azure.com";
 
-    public final static String NETWORK_SECURITY_GROUPS_RESOURCE = "/subscriptions/%s/resourceGroups/%s/providers/" +
-            "Microsoft.Network/networkSecurityGroups/%s?api-version=2016-03-30";
-    public final static String NETWORK_INTERFACES_RESOURCE = "/subscriptions/%s/resourceGroups/%s/providers/" +
-            "Microsoft.Network/networkInterfaces/%s?api-version=2016-03-30";
+    public final static String NETWORK_SECURITY_GROUPS_RESOURCE = "/subscriptions/%s/resourceGroups/%s/providers/"
+            + "Microsoft.Network/networkSecurityGroups/%s?api-version=2016-03-30";
+    public final static String NETWORK_INTERFACES_RESOURCE = "/subscriptions/%s/resourceGroups/%s/providers/"
+            + "Microsoft.Network/networkInterfaces/%s?api-version=2016-03-30";
     public final static String TAGS_RESOURCE = "/subscriptions/%s/resources?$filter=tagname+eq+'%s'&api-version=2015-01-01";
+    public final static String VIRTUAL_MACHINE_SCALE_SET_VIRTUAL_MACHINES_RESOURCE =
+            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft"
+                    + ".Compute/virtualMachineScaleSets/%s/virtualMachines?api-version=2016-03-30";
+    public final static String VIRTUAL_MACHINE_SCALE_SET_NETWORK_INTERFACES_RESOURCE =
+            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft"
+                    + ".Compute/virtualMachineScaleSets/%s/virtualMachines/%s/networkInterfaces/%s?api-version=2016-03-30";
 
     public final static String AZURE_USERNAME = "azure_username";
     public final static String CREDENTIAL = "credential";
@@ -38,5 +43,6 @@ public class AzureConstants {
     public final static String RESOURCE_GROUP = "resourceGroup";
     public final static String NETWORK_SECURITY_GROUP = "networkSecurityGroup";
     public final static String NETWORK_INTERFACE_TAG = "networkInterfaceTag";
+    public final static String VIRTUAL_MACHINE_SCALE_SET = "virtualMachineScaleSet";
     public final static String VALIDATION_AUTHORITY = "validationAuthority";
 }

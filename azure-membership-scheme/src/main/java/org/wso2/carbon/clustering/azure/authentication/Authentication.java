@@ -20,15 +20,15 @@ import com.microsoft.aad.adal4j.AuthenticationResult;
 import com.microsoft.aad.adal4j.ClientCredential;
 import org.wso2.carbon.clustering.azure.AzureConstants;
 import org.wso2.carbon.clustering.azure.exceptions.AzureMembershipSchemeException;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class Authentication {
 
-    public static AuthenticationResult getAuthToken(
-            String username, String credentials, String tenantID, String clientID, 
-            boolean validationAuthority) throws AzureMembershipSchemeException {
+    public static AuthenticationResult getAuthToken(String username, String credentials, String tenantID,
+            String clientID, boolean validationAuthority) throws AzureMembershipSchemeException {
 
         AuthenticationResult result = null;
         ExecutorService service = Executors.newFixedThreadPool(1);
@@ -38,9 +38,9 @@ public class Authentication {
             Future<AuthenticationResult> future;
             if (username == null) {
                 ClientCredential cred = new ClientCredential(clientID, credentials);
-                future = context.acquireToken(AzureConstants.ARM_ENDPOINT, cred, null);
+                future = context.acquireToken(AzureConstants.ARM_ENDPOINT + "/", cred, null);
             } else {
-                future = context.acquireToken(AzureConstants.ARM_ENDPOINT, clientID, username, credentials, null);
+                future = context.acquireToken(AzureConstants.ARM_ENDPOINT + "/", clientID, username, credentials, null);
             }
             result = future.get();
         } catch (Exception ex) {

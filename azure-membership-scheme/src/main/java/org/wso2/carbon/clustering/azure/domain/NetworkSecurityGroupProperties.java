@@ -15,16 +15,13 @@
  */
 package org.wso2.carbon.clustering.azure.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
 /**
- *
  * Azure NetworkSecurityGroup NetworkSecurityGroupProperties
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class NetworkSecurityGroupProperties {
 
     private List networkInterfaces = new ArrayList();
