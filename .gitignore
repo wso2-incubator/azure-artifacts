@@ -16,7 +16,7 @@
 # under the License.
 
 
-# NetBeans specific #
+# NetBeans Project Files
 nbproject/private/
 build/
 nbbuild/
@@ -32,12 +32,19 @@ nb-configuration.xml
 *.iws
 *.swp
 
-# Class Files #
-*.class
+# Eclipse Project Files
+.project
+.classpath
+.settings/
+.metadata
 
-# Package Files #
+# Package Files
 *.jar
 *.war
 *.ear
+
+#Backup files
+*~
+*.bck
 
 target/

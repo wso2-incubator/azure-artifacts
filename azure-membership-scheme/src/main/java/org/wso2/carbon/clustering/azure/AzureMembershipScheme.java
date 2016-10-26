@@ -29,6 +29,8 @@ import com.microsoft.aad.adal4j.AuthenticationResult;
 import org.apache.axis2.clustering.ClusteringFault;
 import org.apache.axis2.clustering.ClusteringMessage;
 import org.apache.axis2.description.Parameter;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.TransformerUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -56,6 +58,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -65,6 +68,7 @@ import java.util.Map;
 public class AzureMembershipScheme implements HazelcastMembershipScheme {
 
     private static final Log log = LogFactory.getLog(AzureMembershipScheme.class);
+    private static final String NETWORK_INTERFACE_NAME_GETTER = "getName";
     private final NetworkConfig nwConfig;
     private final Map<String, Parameter> parameters;
     private final List<ClusteringMessage> messageBuffer;
@@ -153,12 +157,17 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
                 // Get network security group
                 NetworkSecurityGroup nsg = gson
                         .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)), NetworkSecurityGroup.class);
-                List ninames = nsg.getProperties().getNetworkInterfaceNames();
 
-                for (Object niname : ninames) {
+                //Get network security group's network interface names
+                Collection<String> networkInterfaceNames = CollectionUtils
+                        .collect(nsg.getProperties().getNetworkInterfaces(),
+                                TransformerUtils.invokerTransformer(NETWORK_INTERFACE_NAME_GETTER));
+
+                for (String networkInterfaceName : networkInterfaceNames) {
                     // Get network interface by network interface name
                     url = AzureConstants.ARM_ENDPOINT + String
-                            .format(AzureConstants.NETWORK_INTERFACES_RESOURCE, subscriptionID, resourceGroup, niname);
+                            .format(AzureConstants.NETWORK_INTERFACES_RESOURCE, subscriptionID, resourceGroup,
+                                    networkInterfaceName);
                     NetworkInterface networkInterface = gson
                             .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)), NetworkInterface.class);
                     for (IPConfiguration ipConfig : networkInterface.getProperties().getIpConfigurations()) {
@@ -213,17 +222,21 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
                         .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)), VirtualMachines.class);
 
                 for (VirtualMachine virtualMachine : virtualMachines.getValue()) {
-                    //  Get virtual machine IP address
-                    for (NetworkInterface nwInterface : virtualMachine.getProperties().getNetworkProfile()
-                            .getNetworkInterfaces()) {
+
+                    //Get virtual machine's network interfaces' names
+                    Collection<String> networkInterfaceNames = CollectionUtils
+                            .collect(virtualMachine.getProperties().getNetworkProfile().getNetworkInterfaces(),
+                                    TransformerUtils.invokerTransformer(NETWORK_INTERFACE_NAME_GETTER));
+
+                    for (String networkInterfaceName : networkInterfaceNames) {
                         url = AzureConstants.ARM_ENDPOINT + String
                                 .format(AzureConstants.VIRTUAL_MACHINE_SCALE_SET_NETWORK_INTERFACES_RESOURCE,
                                         subscriptionID, resourceGroup, virtualMachineScaleSet,
-                                        virtualMachine.getInstanceId(), nwInterface.getName());
+                                        virtualMachine.getInstanceId(), networkInterfaceNames);
                         NetworkInterface networkInterface = gson
                                 .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)),
                                         NetworkInterface.class);
-
+                        //  Get network interface IP address
                         for (IPConfiguration ipConfig : networkInterface.getProperties().getIpConfigurations()) {
                             ipAddresses.add(ipConfig.getIpConfigurationProperties().getPrivateIPAddress());
                         }

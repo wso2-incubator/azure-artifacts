@@ -15,17 +15,19 @@
  */
 package org.wso2.carbon.clustering.azure.domain;
 
+import java.util.List;
+
 /**
  * Azure Network Profile
  */
 public class NetworkProfile {
-    private NetworkInterface[] networkInterfaces;
+    private List<NetworkInterface> networkInterfaces;
 
-    public NetworkInterface[] getNetworkInterfaces() {
+    public List<NetworkInterface> getNetworkInterfaces() {
         return networkInterfaces;
     }
 
-    public void setNetworkInterfaces(NetworkInterface[] networkInterfaces) {
+    public void setNetworkInterfaces(List<NetworkInterface> networkInterfaces) {
         this.networkInterfaces = networkInterfaces;
     }
 }

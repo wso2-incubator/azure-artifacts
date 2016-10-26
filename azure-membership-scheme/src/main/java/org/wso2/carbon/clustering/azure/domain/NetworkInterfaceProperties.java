@@ -15,18 +15,20 @@
  */
 package org.wso2.carbon.clustering.azure.domain;
 
+import java.util.List;
+
 /**
  * Azure NetworkSecurityGroup NetworkInterface NetworkInterfaceProperties
  */
 public class NetworkInterfaceProperties {
 
-    private IPConfiguration[] ipConfigurations;
+    private List<IPConfiguration> ipConfigurations;
 
-    public IPConfiguration[] getIpConfigurations() {
+    public List<IPConfiguration> getIpConfigurations() {
         return ipConfigurations;
     }
 
-    public void setIpConfigurations(IPConfiguration[] ipConfigurations) {
+    public void setIpConfigurations(List<IPConfiguration> ipConfigurations) {
         this.ipConfigurations = ipConfigurations;
     }
 

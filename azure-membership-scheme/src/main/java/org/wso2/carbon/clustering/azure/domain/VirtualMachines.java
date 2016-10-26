@@ -17,17 +17,19 @@ package org.wso2.carbon.clustering.azure.domain;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.List;
+
 /**
  * Azure Virtual Machine Scale Set
  */
 public class VirtualMachines {
-    @SerializedName("value") private VirtualMachine[] virtualMachines;
+    @SerializedName("value") private List<VirtualMachine> virtualMachines;
 
-    public VirtualMachine[] getValue() {
+    public List<VirtualMachine> getValue() {
         return virtualMachines;
     }
 
-    public void setValue(VirtualMachine[] value) {
+    public void setValue(List<VirtualMachine> value) {
         this.virtualMachines = virtualMachines;
     }
 }
