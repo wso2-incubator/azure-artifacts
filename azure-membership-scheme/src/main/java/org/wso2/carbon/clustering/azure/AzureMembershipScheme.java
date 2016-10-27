@@ -232,7 +232,7 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
                         url = AzureConstants.ARM_ENDPOINT + String
                                 .format(AzureConstants.VIRTUAL_MACHINE_SCALE_SET_NETWORK_INTERFACES_RESOURCE,
                                         subscriptionID, resourceGroup, virtualMachineScaleSet,
-                                        virtualMachine.getInstanceId(), networkInterfaceNames);
+                                        virtualMachine.getInstanceId(), networkInterfaceName);
                         NetworkInterface networkInterface = gson
                                 .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)),
                                         NetworkInterface.class);
