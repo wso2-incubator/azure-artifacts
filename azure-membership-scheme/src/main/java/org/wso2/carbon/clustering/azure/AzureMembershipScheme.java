@@ -315,7 +315,9 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             Member member = membershipEvent.getMember();
             // Send all cluster messages
             carbonCluster.memberAdded(member);
-            log.info(String.format("Member joined [%s] : %s", member.getUuid(), member.getSocketAddress().toString()));
+            log.info(String.format("Member joined [uuid] %s [address] %s", member.getUuid(), member.getSocketAddress()
+                    .toString
+                    ()));
             // Wait for sometime for the member to completely join before replaying messages
             try {
                 Thread.sleep(5000);
@@ -327,7 +329,7 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
         @Override public void memberRemoved(MembershipEvent membershipEvent) {
             Member member = membershipEvent.getMember();
             carbonCluster.memberRemoved(member);
-            log.info(String.format("Member left [%s] : %s", member.getUuid(), member.getSocketAddress().toString()));
+            log.info(String.format("Member left [uuid] %s [address] %s", member.getUuid(), member.getSocketAddress().toString()));
         }
 
         @Override public void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
