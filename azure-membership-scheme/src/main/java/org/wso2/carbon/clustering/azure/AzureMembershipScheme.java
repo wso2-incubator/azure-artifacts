@@ -103,22 +103,22 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             tcpIpConfig.setEnabled(true);
 
             String username = getConstant(AzureConstants.AZURE_USERNAME, "", true);
-            String credential = getConstant(AzureConstants.CREDENTIAL, "", false);
-            String tenantId = getConstant(AzureConstants.TENANT_ID, "", false);
-            String clientId = getConstant(AzureConstants.CLIENT_ID, "", false);
-            String subscriptionId = getConstant(AzureConstants.SUBSCRIPTION_ID, "", false);
-            String resourceGroup = getConstant(AzureConstants.RESOURCE_GROUP, "", false);
-            String networkSecurityGroup = getConstant(AzureConstants.NETWORK_SECURITY_GROUP, "default", false);
-            String networkInterfaceTag = getConstant(AzureConstants.NETWORK_INTERFACE_TAG, "default", false);
-            String virtualMachineScaleSet = getConstant(AzureConstants.VIRTUAL_MACHINE_SCALE_SET, "default", false);
+            String credential = getConstant(AzureConstants.AZURE_CREDENTIAL, "", false);
+            String tenantId = getConstant(AzureConstants.AZURE_TENANT_ID, "", false);
+            String clientId = getConstant(AzureConstants.AZURE_CLIENT_ID, "", false);
+            String subscriptionId = getConstant(AzureConstants.AZURE_SUBSCRIPTION_ID, "", false);
+            String resourceGroup = getConstant(AzureConstants.AZURE_RESOURCE_GROUP, "", false);
+            String networkSecurityGroup = getConstant(AzureConstants.AZURE_NETWORK_SECURITY_GROUP, "default", false);
+            String networkInterfaceTag = getConstant(AzureConstants.AZURE_NETWORK_INTERFACE_TAG, "default", false);
+            String virtualMachineScaleSet = getConstant(AzureConstants.AZURE_VIRTUAL_MACHINE_SCALE_SET, "default", false);
             boolean validationAuthority = Boolean
-                    .parseBoolean(getConstant(AzureConstants.VALIDATION_AUTHORITY, "false", true));
+                    .parseBoolean(getConstant(AzureConstants.AZURE_VALIDATE_AUTHORITY, "false", true));
 
             if (networkInterfaceTag == null && networkSecurityGroup == null && virtualMachineScaleSet == null) {
                 throw new ClusteringFault(
                         String.format("The parameters %s, %s and %s are empty. Define at least one " + "of them",
-                                AzureConstants.NETWORK_SECURITY_GROUP, AzureConstants.NETWORK_INTERFACE_TAG,
-                                AzureConstants.VIRTUAL_MACHINE_SCALE_SET));
+                                AzureConstants.AZURE_NETWORK_SECURITY_GROUP, AzureConstants.AZURE_NETWORK_INTERFACE_TAG,
+                                AzureConstants.AZURE_VIRTUAL_MACHINE_SCALE_SET));
             }
 
             AuthenticationResult authResult = Authentication
@@ -261,7 +261,7 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             final HttpClient httpClient = new DefaultHttpClient();
             HttpConnectionParams.setConnectionTimeout(httpClient.getParams(), 10000);
             HttpGet httpGet = new HttpGet(url);
-            httpGet.addHeader("Authorization", "Bearer " + accessToken);
+            httpGet.addHeader(AzureConstants.AUTHORIZATION_HEADER, "Bearer " + accessToken);
             HttpResponse response = httpClient.execute(httpGet);
             HttpEntity entity = response.getEntity();
             inputStream = entity.getContent();
