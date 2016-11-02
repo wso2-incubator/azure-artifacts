@@ -29,7 +29,7 @@ public class VirtualMachines {
         return virtualMachines;
     }
 
-    public void setValue(List<VirtualMachine> value) {
+    public void setValue(List<VirtualMachine> virtualMachines) {
         this.virtualMachines = virtualMachines;
     }
 }

@@ -15,13 +15,13 @@
  */
 package org.wso2.carbon.clustering.azure.domain;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Azure NetworkSecurityGroup NetworkSecurityGroupProperties
  */
 public class NetworkSecurityGroupProperties {
-
     private List<NetworkInterface> networkInterfaces;
 
     public List<NetworkInterface> getNetworkInterfaces() {
@@ -30,5 +30,13 @@ public class NetworkSecurityGroupProperties {
 
     public void setNetworkInterfaces(List<NetworkInterface> networkInterfaces) {
         this.networkInterfaces = networkInterfaces;
+    }
+
+    public List<String> getNetworkInterfaceNames() {
+        List<String> networkInterfaceNames = new ArrayList<String>();
+        for (NetworkInterface networkInterface : networkInterfaces) {
+            networkInterfaceNames.add(networkInterface.getName());
+        }
+        return networkInterfaceNames;
     }
 }

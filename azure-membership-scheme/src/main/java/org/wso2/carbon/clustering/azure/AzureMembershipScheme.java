@@ -29,19 +29,9 @@ import com.microsoft.aad.adal4j.AuthenticationResult;
 import org.apache.axis2.clustering.ClusteringFault;
 import org.apache.axis2.clustering.ClusteringMessage;
 import org.apache.axis2.description.Parameter;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.TransformerUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.HttpConnectionParams;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.wso2.carbon.clustering.azure.authentication.Authentication;
 import org.wso2.carbon.clustering.azure.domain.IPConfiguration;
 import org.wso2.carbon.clustering.azure.domain.NetworkInterface;
@@ -57,8 +47,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -68,7 +59,6 @@ import java.util.Map;
 public class AzureMembershipScheme implements HazelcastMembershipScheme {
 
     private static final Log log = LogFactory.getLog(AzureMembershipScheme.class);
-    private static final String NETWORK_INTERFACE_NAME_GETTER = "getName";
     private final NetworkConfig nwConfig;
     private final Map<String, Parameter> parameters;
     private final List<ClusteringMessage> messageBuffer;
@@ -102,56 +92,66 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             TcpIpConfig tcpIpConfig = nwConfig.getJoin().getTcpIpConfig();
             tcpIpConfig.setEnabled(true);
 
+            String azureAPIVersion = getConstant(AzureConstants.AZURE_API_VERSION,
+                    AzureConstants.DEFAULT_AZURE_API_VERSION, true);
+            String ARMEndPoint = getConstant(AzureConstants.ARM_ENDPOINT, AzureConstants.DEFAULT_ARM_ENDPOINT, true);
+            String authorizationEndPoint = getConstant(AzureConstants.AUTHORIZATION_ENDPOINT,
+                    AzureConstants.DEFAULT_AUTHORIZATION_ENDPOINT, true);
             String username = getConstant(AzureConstants.AZURE_USERNAME, "", true);
             String credential = getConstant(AzureConstants.AZURE_CREDENTIAL, "", false);
             String tenantId = getConstant(AzureConstants.AZURE_TENANT_ID, "", false);
             String clientId = getConstant(AzureConstants.AZURE_CLIENT_ID, "", false);
             String subscriptionId = getConstant(AzureConstants.AZURE_SUBSCRIPTION_ID, "", false);
             String resourceGroup = getConstant(AzureConstants.AZURE_RESOURCE_GROUP, "", false);
-            String networkSecurityGroup = getConstant(AzureConstants.AZURE_NETWORK_SECURITY_GROUP, "default", false);
-            String networkInterfaceTag = getConstant(AzureConstants.AZURE_NETWORK_INTERFACE_TAG, "default", false);
-            String virtualMachineScaleSet = getConstant(AzureConstants.AZURE_VIRTUAL_MACHINE_SCALE_SET, "default", false);
-            boolean validationAuthority = Boolean
+            String networkSecurityGroup = getConstant(AzureConstants.AZURE_NETWORK_SECURITY_GROUP, "", true);
+            String networkInterfaceTagKey = getConstant(AzureConstants.AZURE_NETWORK_INTERFACE_TAG_KEY, "", true);
+            String networkInterfaceTagValue = getConstant(AzureConstants.AZURE_NETWORK_INTERFACE_TAG_VALUE, "", true);
+            String virtualMachineScaleSet = getConstant(AzureConstants.AZURE_VIRTUAL_MACHINE_SCALE_SET, "", true);
+            boolean validateAuthority = Boolean
                     .parseBoolean(getConstant(AzureConstants.AZURE_VALIDATE_AUTHORITY, "false", true));
 
-            if (networkInterfaceTag == null && networkSecurityGroup == null && virtualMachineScaleSet == null) {
-                throw new ClusteringFault(
-                        String.format("The parameters %s, %s and %s are empty. Define at least one " + "of them",
-                                AzureConstants.AZURE_NETWORK_SECURITY_GROUP, AzureConstants.AZURE_NETWORK_INTERFACE_TAG,
-                                AzureConstants.AZURE_VIRTUAL_MACHINE_SCALE_SET));
+            if (networkSecurityGroup == null && virtualMachineScaleSet == null) {
+                throw new ClusteringFault(String.format("Both %s and %s params are empty. Define at least one of them",
+                        AzureConstants.AZURE_NETWORK_SECURITY_GROUP, AzureConstants.AZURE_VIRTUAL_MACHINE_SCALE_SET));
             }
 
             AuthenticationResult authResult = Authentication
-                    .getAuthToken(username, credential, tenantId, clientId, validationAuthority);
+                    .getAuthToken(authorizationEndPoint, username, credential, tenantId, clientId, validateAuthority,
+                            ARMEndPoint);
             log.info(String.format("Azure clustering configuration: [authorization-endpoint] %s , [arm-endpoint] %s , "
-                            + "[tenant-id] %s , [client-id] %s", AzureConstants.AUTHORIZATION_ENDPOINT,
-                    AzureConstants.ARM_ENDPOINT, tenantId, clientId));
+                    + "[tenant-id] %s , [client-id] %s", authorizationEndPoint, ARMEndPoint, tenantId, clientId));
 
-            List<String> ipAddresses = findIPAddresses(authResult.getAccessToken(), subscriptionId, resourceGroup,
-                    networkSecurityGroup, networkInterfaceTag, virtualMachineScaleSet);
-            for (Object IPAddress : ipAddresses) {
-                nwConfig.getJoin().getTcpIpConfig().addMember(IPAddress.toString());
-                log.info(String.format("Member added to cluster configuration: [ip-address] %s", IPAddress.toString()));
+            if (authResult != null && StringUtils.isNotEmpty(authResult.getAccessToken())) {
+                List<String> ipAddresses = findIPAddresses(ARMEndPoint, azureAPIVersion, authResult.getAccessToken(),
+                        subscriptionId, resourceGroup, networkSecurityGroup, networkInterfaceTagKey,
+                        networkInterfaceTagValue, virtualMachineScaleSet);
+                for (Object IPAddress : ipAddresses) {
+                    nwConfig.getJoin().getTcpIpConfig().addMember(IPAddress.toString());
+                    log.info(String.format("Member added to cluster configuration: [ip-address] %s",
+                            IPAddress.toString()));
+                }
             }
+
             log.info("Azure membership scheme initialized successfully");
         } catch (Exception ex) {
             throw new ClusteringFault("Azure membership initialization failed", ex);
         }
     }
 
-    private List<String> findIPAddresses(String accessToken, String subscriptionID, String resourceGroup,
-            String networkSecurityGroup, String networkInterfaceTag, String virtualMachineScaleSet)
-            throws AzureMembershipSchemeException {
+    private List<String> findIPAddresses(String ARMEndPoint, String azureAPIVersion, String accessToken,
+            String subscriptionID, String resourceGroup, String networkSecurityGroup, String networkInterfaceTagKey,
+            String networkInterfaceTagValue, String virtualMachineScaleSet) throws AzureMembershipSchemeException {
 
         List<String> ipAddresses = new ArrayList<>();
         Gson gson = new GsonBuilder().create();
 
-        if ((StringUtils.isNotEmpty(networkSecurityGroup)) && (StringUtils.isEmpty(networkInterfaceTag)) && (StringUtils
-                .isEmpty(virtualMachineScaleSet))) {
-            // Find ip addresses based on network security group
-            String url = AzureConstants.ARM_ENDPOINT + String
+        if ((StringUtils.isNotEmpty(networkSecurityGroup)) && (StringUtils.isEmpty(virtualMachineScaleSet))) {
+
+            // Find IP addresses based on network security group
+
+            String url = ARMEndPoint + String
                     .format(AzureConstants.NETWORK_SECURITY_GROUPS_RESOURCE, subscriptionID, resourceGroup,
-                            networkSecurityGroup);
+                            networkSecurityGroup) + "?" + AzureConstants.API_VERSION_QUERY_PARAM + azureAPIVersion;
             try {
 
                 // Get network security group
@@ -159,88 +159,93 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
                         .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)), NetworkSecurityGroup.class);
 
                 //Get network security group's network interface names
-                Collection<String> networkInterfaceNames = CollectionUtils
-                        .collect(nsg.getProperties().getNetworkInterfaces(),
-                                TransformerUtils.invokerTransformer(NETWORK_INTERFACE_NAME_GETTER));
-
-                for (String networkInterfaceName : networkInterfaceNames) {
-                    // Get network interface by network interface name
-                    url = AzureConstants.ARM_ENDPOINT + String
-                            .format(AzureConstants.NETWORK_INTERFACES_RESOURCE, subscriptionID, resourceGroup,
-                                    networkInterfaceName);
-                    NetworkInterface networkInterface = gson
-                            .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)), NetworkInterface.class);
-                    for (IPConfiguration ipConfig : networkInterface.getProperties().getIpConfigurations()) {
-                        ipAddresses.add(ipConfig.getIpConfigurationProperties().getPrivateIPAddress());
-                    }
-                }
-            } catch (IOException ex) {
-                throw new AzureMembershipSchemeException("Could not find VM IP addresses", ex);
-            }
-        } else if ((StringUtils.isNotEmpty(networkInterfaceTag)) && (StringUtils.isEmpty(networkSecurityGroup))
-                && (StringUtils.isEmpty(virtualMachineScaleSet))) {
-            try {
-                // Find ip addresses based on network interface tag
-                String url = AzureConstants.ARM_ENDPOINT + String
-                        .format(AzureConstants.TAGS_RESOURCE, subscriptionID, networkInterfaceTag);
-
-                //TODO: Use Gson for JSON response message deserialization
-                // Get tag resource
-                JSONObject rootElement = new JSONObject(inputStreamToString(invokeGetMethod(url, accessToken)));
-                JSONArray values = rootElement.getJSONArray("value");
-                List<String> ninames = new ArrayList<>();
-                for (int i = 0; i < values.length(); i++) {
-                    JSONObject firstelement = values.getJSONObject(i);
-                    Object name = firstelement.get("name");
-                    if ((name != null) && StringUtils.isNotEmpty(name.toString())) {
-                        ninames.add(name.toString());
-                    }
-                }
-                for (Object niname : ninames) {
-                    // Get network interface by network interface name
-                    url = AzureConstants.ARM_ENDPOINT + String
-                            .format(AzureConstants.NETWORK_INTERFACES_RESOURCE, subscriptionID, resourceGroup, niname);
-                    NetworkInterface networkInterface = gson
-                            .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)), NetworkInterface.class);
-                    for (IPConfiguration ipConfig : networkInterface.getProperties().getIpConfigurations()) {
-                        ipAddresses.add(ipConfig.getIpConfigurationProperties().getPrivateIPAddress());
-                    }
-                }
-            } catch (IOException ex) {
-                throw new AzureMembershipSchemeException("Could not find VM IP addresses", ex);
-            }
-        } else if ((StringUtils.isNotEmpty(virtualMachineScaleSet)) && (StringUtils.isEmpty(networkInterfaceTag))
-                && (StringUtils.isEmpty(networkSecurityGroup))) {
-            try {
-                // Find IP addresses based on virtual machine scale set
-
-                // Get virtual machines belongs to a specific virtualMachineScaleSet
-                String url = AzureConstants.ARM_ENDPOINT + String
-                        .format(AzureConstants.VIRTUAL_MACHINE_SCALE_SET_VIRTUAL_MACHINES_RESOURCE, subscriptionID,
-                                resourceGroup, virtualMachineScaleSet);
-                VirtualMachines virtualMachines = gson
-                        .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)), VirtualMachines.class);
-
-                for (VirtualMachine virtualMachine : virtualMachines.getValue()) {
-
-                    //Get virtual machine's network interfaces' names
-                    Collection<String> networkInterfaceNames = CollectionUtils
-                            .collect(virtualMachine.getProperties().getNetworkProfile().getNetworkInterfaces(),
-                                    TransformerUtils.invokerTransformer(NETWORK_INTERFACE_NAME_GETTER));
-
-                    for (String networkInterfaceName : networkInterfaceNames) {
-                        url = AzureConstants.ARM_ENDPOINT + String
-                                .format(AzureConstants.VIRTUAL_MACHINE_SCALE_SET_NETWORK_INTERFACES_RESOURCE,
-                                        subscriptionID, resourceGroup, virtualMachineScaleSet,
-                                        virtualMachine.getInstanceId(), networkInterfaceName);
+                if (nsg.getProperties().getNetworkInterfaces() == null) {
+                    log.warn(String.format("Could not find VMs belongs to [network-security-group] %s",
+                            networkSecurityGroup));
+                } else {
+                    boolean hasTag = false;
+                    for (String networkInterfaceName : nsg.getProperties().getNetworkInterfaceNames()) {
+                        // Get network interface by network interface name
+                        url = ARMEndPoint + String
+                                .format(AzureConstants.NETWORK_INTERFACES_RESOURCE, subscriptionID, resourceGroup,
+                                        networkInterfaceName) + "?" + AzureConstants.API_VERSION_QUERY_PARAM
+                                + azureAPIVersion;
                         NetworkInterface networkInterface = gson
                                 .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)),
                                         NetworkInterface.class);
-                        //  Get network interface IP address
-                        for (IPConfiguration ipConfig : networkInterface.getProperties().getIpConfigurations()) {
-                            ipAddresses.add(ipConfig.getIpConfigurationProperties().getPrivateIPAddress());
-                        }
 
+                        // Filter the network interfaces belongs to the networkInterfaceTag
+                        if ((StringUtils.isNotEmpty(networkInterfaceTagKey)) && (StringUtils
+                                .isNotEmpty(networkInterfaceTagValue)) && (!networkInterfaceTagValue
+                                .equals(networkInterface.getTags().get(networkInterfaceTagKey)))) {
+
+                            // NetworkInterface doesn't have the specified network interface tag value
+                            continue;
+                        }
+                        hasTag= true;
+
+                        // Get the IP addresses of network interfaces which has specified tag if provided
+                        if ((networkInterface.getProperties().getIpConfigurations() == null)) {
+                            log.warn(String.format(
+                                    "Could not find IP addresses of VMs belongs to [network-security-group] %s",
+                                    networkSecurityGroup));
+                        } else {
+                            for (IPConfiguration ipConfig : networkInterface.getProperties().getIpConfigurations()) {
+                                ipAddresses.add(ipConfig.getIpConfigurationProperties().getPrivateIPAddress());
+                            }
+                        }
+                    }
+                    if ((StringUtils.isNotEmpty(networkInterfaceTagKey)) && (StringUtils
+                            .isNotEmpty(networkInterfaceTagValue)) && !(hasTag)){
+                        log.warn(String.format(
+                                "Could not find VMs belongs to [network-security-group] %s "
+                                        + "[network-interface-tag-key] %s and [network-interface-tag-value] %s",
+                                networkSecurityGroup, networkInterfaceTagKey, networkInterfaceTagValue));
+                    }
+                }
+            } catch (IOException ex) {
+                throw new AzureMembershipSchemeException("Could not find VM IP addresses", ex);
+            }
+        } else if ((StringUtils.isNotEmpty(virtualMachineScaleSet)) && (StringUtils.isEmpty(networkSecurityGroup))) {
+
+            // Find members' IP addresses based on virtual machine scale set
+
+            try {
+                // Get virtual machines belongs to a specific virtualMachineScaleSet
+                String url = ARMEndPoint + String
+                        .format(AzureConstants.VIRTUAL_MACHINE_SCALE_SET_VIRTUAL_MACHINES_RESOURCE, subscriptionID,
+                                resourceGroup, virtualMachineScaleSet) + "?" + AzureConstants.API_VERSION_QUERY_PARAM
+                        + azureAPIVersion;
+                VirtualMachines virtualMachines = gson
+                        .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)), VirtualMachines.class);
+
+                // Get network interfaces' IP address
+                for (VirtualMachine virtualMachine : virtualMachines.getValue()) {
+                    if (virtualMachine.getProperties().getNetworkProfile() == null) {
+                        log.warn(String.format("Could not find VMs belongs to [virtual-machine-scale-set] %s",
+                                virtualMachineScaleSet));
+                    } else {
+                        for (String networkInterfaceName : virtualMachine.getProperties().getNetworkProfile()
+                                .getNetworkInterfaceNames()) {
+                            url = ARMEndPoint + String
+                                    .format(AzureConstants.VIRTUAL_MACHINE_SCALE_SET_NETWORK_INTERFACES_RESOURCE,
+                                            subscriptionID, resourceGroup, virtualMachineScaleSet,
+                                            virtualMachine.getInstanceId(), networkInterfaceName) + "?"
+                                    + AzureConstants.API_VERSION_QUERY_PARAM + azureAPIVersion;
+                            NetworkInterface networkInterface = gson
+                                    .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)),
+                                            NetworkInterface.class);
+                            if (networkInterface.getProperties().getIpConfigurations() == null) {
+                                log.warn(String.format(
+                                        "Could not find IP addresses of VMs belongs to [virtual-machine-scale-set] %s",
+                                        virtualMachineScaleSet));
+                            } else {
+                                for (IPConfiguration ipConfig : networkInterface.getProperties()
+                                        .getIpConfigurations()) {
+                                    ipAddresses.add(ipConfig.getIpConfigurationProperties().getPrivateIPAddress());
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -248,8 +253,8 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
                 throw new AzureMembershipSchemeException("Could not find VM IP addresses", ex);
             }
         } else {
-            throw new AzureMembershipSchemeException("The networkSecurityGroup or networkInterfaceTag or "
-                    + "virtualMachineScaleSet must be chosen as the grouping method");
+            throw new AzureMembershipSchemeException(
+                    "The networkSecurityGroup or virtualMachineScaleSet must be chosen as the grouping method");
         }
         return ipAddresses;
     }
@@ -258,14 +263,10 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
 
         InputStream inputStream;
         try {
-            final HttpClient httpClient = new DefaultHttpClient();
-            HttpConnectionParams.setConnectionTimeout(httpClient.getParams(), 10000);
-            HttpGet httpGet = new HttpGet(url);
-            httpGet.addHeader(AzureConstants.AUTHORIZATION_HEADER, "Bearer " + accessToken);
-            HttpResponse response = httpClient.execute(httpGet);
-            HttpEntity entity = response.getEntity();
-            inputStream = entity.getContent();
-        } catch (Exception ex) {
+            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setRequestProperty(AzureConstants.AUTHORIZATION_HEADER, "Bearer " + accessToken);
+            inputStream = connection.getInputStream();
+        } catch (IOException ex) {
             throw new AzureMembershipSchemeException("Could not connect to Azure API", ex);
         }
         return inputStream;
@@ -289,7 +290,7 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
                 if (StringUtils.isEmpty(param) && !isOptional) {
                     //should leave default value blank if the value is mandatory
                     throw new ClusteringFault(String.format("Azure %s parameter not found", constant));
-                } else {
+                } else if (StringUtils.isEmpty(param)) {
                     param = null;
                 }
             } else {
@@ -299,13 +300,13 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
         return param;
     }
 
-    private String inputStreamToString(InputStream instream) throws IOException {
+    private String inputStreamToString(InputStream inStream) throws IOException {
         StringBuilder sb = new StringBuilder();
-        BufferedReader r = new BufferedReader(new InputStreamReader(instream), 1000);
+        BufferedReader r = new BufferedReader(new InputStreamReader(inStream), 1000);
         for (String line = r.readLine(); line != null; line = r.readLine()) {
             sb.append(line);
         }
-        instream.close();
+        inStream.close();
         return sb.toString();
     }
 
@@ -315,9 +316,8 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             Member member = membershipEvent.getMember();
             // Send all cluster messages
             carbonCluster.memberAdded(member);
-            log.info(String.format("Member joined [uuid] %s [address] %s", member.getUuid(), member.getSocketAddress()
-                    .toString
-                    ()));
+            log.info(String.format("Member joined [uuid] %s [address] %s", member.getUuid(),
+                    member.getSocketAddress().toString()));
             // Wait for sometime for the member to completely join before replaying messages
             try {
                 Thread.sleep(5000);
@@ -329,7 +329,8 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
         @Override public void memberRemoved(MembershipEvent membershipEvent) {
             Member member = membershipEvent.getMember();
             carbonCluster.memberRemoved(member);
-            log.info(String.format("Member left [uuid] %s [address] %s", member.getUuid(), member.getSocketAddress().toString()));
+            log.info(String.format("Member left [uuid] %s [address] %s", member.getUuid(),
+                    member.getSocketAddress().toString()));
         }
 
         @Override public void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {

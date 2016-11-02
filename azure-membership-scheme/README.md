@@ -4,7 +4,7 @@ Azure membership scheme provides features for automatically discovering WSO2 Car
 
 ##How It Works
 
-Once a Carbon server starts it will query Virtual Machine IP addresses in the given cluster via Azure API. Before the cluster starts, it should be ensured that either all of the virtual machines in the cluster are added to a particular network security group or the  network interfaces of the virtual machines in the cluster are tagged with the same tag name or create the virtual machines using Azure Virtual Machine Scale Set. Thereafter Hazelcast network configuration will be updated with the above VM IP addresses. As a result the Hazelcast instance will get connected to all the other members in the cluster. In addition once a new member is added to the cluster, all the other members will get connected to the new member.
+Once a Carbon server starts it will query Virtual Machine IP addresses in the given cluster via Azure API. Before the cluster starts, it should be ensured that either all of the virtual machines in the cluster are added to a particular network security group or the virtual machines are created using Azure Virtual Machine Scale Set. Additionally if the VMs are grouped by the network security group, the network interfaces can be tagged as needed and VMs belongs to a network security group can be further filtered by network interface tag name. Thereafter Hazelcast network configuration will be updated with the above VM IP addresses. As a result the Hazelcast instance will get connected to all the other members in the cluster. In addition once a new member is added to the cluster, all the other members will get connected to the new member.
 
 ##Installation
 
@@ -12,29 +12,11 @@ Once a Carbon server starts it will query Virtual Machine IP addresses in the gi
 
 2. Copy following JAR files to the repository/components/lib directory of the Carbon server:
 
-
- _accessors-smart-1.1.jar
- bcprov-jdk15on-1.51.jar
- gson-2.2.4.jar
- jcip-annotations-1.0.jar
- lang-tag-1.4.jar
- nimbus-jose-jwt-3.1.2.jar
- activation-1.1.jar
- commons-codec-1.9.jar
- httpclient-4.5.jar
- json-2.0.0.wso2v1.jar
- mail-1.4.7.jar
- oauth2-oidc-sdk-4.5.jar
- adal4j-0.0.2.jar
- commons-lang3-3.3.1.jar
- httpcore-4.4.1.jar
- json-smart-2.2.1.jar
- azure-membership-scheme-1.0-SNAPSHOT.jar
- slf4j-api-1.7.5.jar
- asm-5.0.3.jar
- commons-logging-1.2.jar
- java-json-0.13.0.jar  
-
+adal4j-0.0.2.jar
+azure-membership-scheme-1.0-SNAPSHOT.jar
+commons-lang3-3.3.1.jar
+commons-logging-1.2.jar
+oauth2-oidc-sdk-4.5.jar
 
 3. Update axis2.xml with the following configuration:
  
@@ -43,69 +25,81 @@ Once a Carbon server starts it will query Virtual Machine IP addresses in the gi
     
     <parameter name="membershipSchemeClassName">org.wso2.carbon.clustering.azure.AzureMembershipScheme</parameter>
     <parameter name="membershipScheme">azure</parameter>
-    <parameter name="ARM_ENDPOINT">https://management.azure.com/</parameter>
-    <parameter name="AURORIZATION_ENDPOINT">https://login.microsoftonline.com/</parameter>
-    <parameter name="AZURE_SUBSCRIPTION_ID">your Azure subscription ID</parameter>
-    <parameter name="AZURE_TENANT_ID">your active directory tenant ID</parameter>
-    <parameter name="AZURE_CLIENT_ID">your service principal client ID</parameter>
-    <parameter name="AZURE_CREDENTIAL"> client secret of the client ID</parameter>
-    <parameter name="AZURE_RESOURCE_GROUP">resource group in which your cluster is deployed</parameter>
-    <parameter name="AZURE_NETWORK_SECURITY_GROUP">network security group to which members are added</parameter>
-    <parameter name="AZURE_NETWORK_INTERFACE_TAG">tag name of the tag added to network interfaces of the VMs in the cluster</parameter>
-    <parameter name="AZURE_VIRTUAL_MACHINE_SCALE_SET">virtual machine scale set name to which the cluster VMs belongs to</parameter>
+    <parameter name="AZURE_SUBSCRIPTION_ID">Azure Subscription ID</parameter>
+    <parameter name="AZURE_TENANT_ID">Azure Active Directory Tenant ID</parameter>
+    <parameter name="AZURE_CLIENT_ID">Azure AD Application Client ID</parameter>
+    <parameter name="AZURE_CREDENTIAL">Azure AD Application Client Secret</parameter>
+    <parameter name="AZURE_RESOURCE_GROUP">Azure Resource Group in which your cluster is deployed</parameter>
+    <parameter name="AZURE_NETWORK_SECURITY_GROUP">Azure Network Security Group of cluster VMs</parameter>
+    <parameter name="AZURE_NETWORK_INTERFACE_TAG">Azure Network Interface Tag name of the VMs in the cluster</parameter>
+    <parameter name="AZURE_VIRTUAL_MACHINE_SCALE_SET">Azure Virtual Machine Scale Set name to which the cluster VMs belongs to</parameter>
   
 </clustering> 
 ```
   
 ###Clustering Parameters
-  
-1. AZURE_SUBSCRIPTION_ID - Azure Subscription ID
-2. AZURE_TENANT_ID - Tenant ID of Azure application
-3. AZURE_CLIENT_ID - Client ID of Azure application
-4. AZURE_CREDENTIAL - Client key
-5. AZURE_RESOURCE_GROUP - Name of the resource group where the cluster is deployed
-6. AZURE_NETWORK_SECURITY_GROUP - Network security group where relevant VMs are added to
-7. AZURE_NETWORK_INTERFACE_TAG - Tag name of the network interfaces of the VMs in the cluster
-8. AZURE_VIRTUAL_MACHINE_SCALE_SET - Azure virtual machine scale set name to which the cluster VMs belongs to
-9. AZURE_USERNAME - Azure user name (optional)
-10. AZURE_VALIDATE_AUTHORITY - Enable/disable authority address validation (optional) and default value is set to false
+
+* In order to use Azure membership scheme to cluster carbon servers(VMs) in Azure PaaS, set the membershipScheme to 'azure' and the membershipSchemeClassName to org.wso2.carbon.clustering.azure.AzureMembershipScheme' as shown above.
+
+* Following parameters are needed to access Azure resource details.
+    1. AZURE_SUBSCRIPTION_ID - Azure Subscription ID
+    2. AZURE_TENANT_ID - Azure Active Directory(AD) Tenant ID
+    3. AZURE_CLIENT_ID - Azure AD Application Client ID
+    4. AZURE_CREDENTIAL - Azure AD Application Client Secret
+    5. AZURE_USERNAME - Azure User Name (optional)
+    6. AZURE_VALIDATE_AUTHORITY - Enable/disable authority address validation (optional) and default value is set to false
+   
+   The Azure by default uses 'https://login.microsoftonline.com/' as authorization endpoint and 'https://management.azure.com/' as Azure Resource Manager(ARM) endpoint. If this endpoint values are different from these default values, set them using 'AUTHORIZATION_ENDPOINT' and 'ARM_ENDPOINT' parameters.
+      
+   The Azure membership scheme uses '2016-03-30' as default Azure API version. Azure API version can be configured using 'AZURE_API_VERSION' parameter.
+   
+
+* All carbon servers (VMs) which has to be added to the same cluster has to created under same Azure Resource Group. The carbon servers which has to be clustered can be grouped by Azure Network Security Group(NSG) or Azure Virtual Machine Scale Set(VMSS) when VMs are created.
+It has to be ensured NSG has only VMs which are needed to be added to the same cluster and there is a one to one mapping between NSG's network interfaces and VMs. If needed we can further group VMs which belongs to a NSG by creating tags for NSG Network Interfaces and can filter only required VMs by Network Interface tag.
+The VMSS based clustering can be used when auto scaling feature is needed. We can create VMs which belongs to the same cluster using a VMSS with required scale rules. Following are Azure PaaS related params used to cluster carbon servers. Either NSG or VMSS based clustering can be used but not both.
+    1. AZURE_RESOURCE_GROUP - Azure Resource Group name where the cluster is deployed
+    2. AZURE_NETWORK_SECURITY_GROUP - Azure Network Security Group where relevant VMs are added to
+    3. AZURE_NETWORK_INTERFACE_TAG_KEY - Azure Tag name of the NSG's Network Interface (optional)
+    4. AZURE_NETWORK_INTERFACE_TAG_VALUE - Azure Tag value of the NSG's Network Interface (optional)
+    5. AZURE_VIRTUAL_MACHINE_SCALE_SET - Azure Virtual Machine Scale Set name to which the cluster VMs belongs to
+
 
 ####Sample clustering configuration
   
-#####Configuration 1: Clustering VMs using Azure Network Security Group
+#####Configuration 1: Clustering VMs using Azure Network Security Group 
+
+######Configuration 1.1: Azure Network Security Group based clustering with Network Interface Tag
 
 ```xml
 <clustering class="org.wso2.carbon.core.clustering.hazelcast.HazelcastClusteringAgent" enable="true">
 
     <parameter name="membershipSchemeClassName">com.osura.membershipscheme.azure.AzureMembershipScheme</parameter>
     <parameter name="membershipScheme">azure</parameter>
-    <parameter name="ARM_ENDPOINT">https://management.azure.com/</parameter>
-    <parameter name="AURORIZATION_ENDPOINT">https://login.microsoftonline.com/</parameter>
-    <parameter name="AZURE_SUBSCRIPTION_ID">0820043e-501c-43ff-ab1d-a96258a301dw</parameter>
-    <parameter name="AZURE_TENANT_ID">7a94c74f-5ab1-46c2-a98c-df7df7c5f41w</parameter>
-    <parameter name="AZURE_CLIENT_ID">ce86678c-8520-431c-9c9f-0bdf733e4131</parameter>
-    <parameter name="AZURE_CREDENTIAL">uduq558Ble9TlucvGECEFDvRqGv6q0WsFvFWYWOTaRw=</parameter>
-    <parameter name="AZURE_RESOURCE_GROUP">wso2ASResourceGroup</parameter>
-    <parameter name="AZURE_NETWORK_SECURITY_GROUP">NetworkSecurityGroup1</parameter>
+    <parameter name="AZURE_SUBSCRIPTION_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
+    <parameter name="AZURE_TENANT_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
+    <parameter name="AZURE_CLIENT_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
+    <parameter name="AZURE_CREDENTIAL">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
+    <parameter name="AZURE_RESOURCE_GROUP">wso2esbrg</parameter>
+    <parameter name="AZURE_NETWORK_SECURITY_GROUP">wso2esbnwsg</parameter>
+    <parameter name="AZURE_NETWORK_INTERFACE_TAG_KEY">esb-ni</parameter>
+    <parameter name="AZURE_NETWORK_INTERFACE_TAG_VALUE">esb500</parameter>
  
 </clustering>
 ```
 
-#####Configuration 2: Clustering VMs using Azure Network Interface Tag
+######Configuration 1.2: Azure Network Security Group based clustering without Network Interface Tag
   
 ```xml
 <clustering class="org.wso2.carbon.core.clustering.hazelcast.HazelcastClusteringAgent" enable="true">
 
     <parameter name="membershipSchemeClassName">com.osura.membershipscheme.azure.AzureMembershipScheme</parameter>
     <parameter name="membershipScheme">azure</parameter>
-    <parameter name="ARM_ENDPOINT">https://management.azure.com/</parameter>
-    <parameter name="AURORIZATION_ENDPOINT">https://login.microsoftonline.com/</parameter>
-    <parameter name="AZURE_SUBSCRIPTION_ID">0820043e-501c-43ff-ab1d-a96258a301dw</parameter>
-    <parameter name="AZURE_TENANT_ID">7a94c74f-5ab1-46c2-a98c-df7df7c5f41w</parameter>
-    <parameter name="AZURE_CLIENT_ID">ce86678c-8520-431c-9c9f-0bdf733e4131</parameter>
-    <parameter name="AZURE_CREDENTIAL">uduq558Ble9TlucvGECEFDvRqGv6q0WsFvFWYWOTaRw=</parameter>
-    <parameter name="AZURE_RESOURCE_GROUP">wso2ASResourceGroup</parameter>
-    <parameter name="AZURE_NETWORK_INTERFACE_TAG">WSO2ESB</parameter>   
+    <parameter name="AZURE_SUBSCRIPTION_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
+    <parameter name="AZURE_TENANT_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
+    <parameter name="AZURE_CLIENT_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
+    <parameter name="AZURE_CREDENTIAL">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
+    <parameter name="AZURE_RESOURCE_GROUP">wso2esbrg</parameter>
+    <parameter name="AZURE_NETWORK_SECURITY_GROUP">wso2esbnwsg</parameter>
 
 </clustering>
 ```
@@ -118,13 +112,11 @@ Once a Carbon server starts it will query Virtual Machine IP addresses in the gi
  
     <parameter name="membershipSchemeClassName">com.osura.membershipscheme.azure.AzureMembershipScheme</parameter>
     <parameter name="membershipScheme">azure</parameter>
-    <parameter name="ARM_ENDPOINT">https://management.azure.com/</parameter>
-    <parameter name="AURORIZATION_ENDPOINT">https://login.microsoftonline.com/</parameter>
-    <parameter name="AZURE_SUBSCRIPTION_ID">0820043e-501c-43ff-ab1d-a96258a301dw</parameter>
-    <parameter name="AZURE_TENANT_ID">7a94c74f-5ab1-46c2-a98c-df7df7c5f41w</parameter>
-    <parameter name="AZURE_CLIENT_ID">ce86678c-8520-431c-9c9f-0bdf733e4131</parameter>
-    <parameter name="AZURE_CREDENTIAL">uduq558Ble9TlucvGECEFDvRqGv6q0WsFvFWYWOTaRw=</parameter>
-    <parameter name="AZURE_RESOURCE_GROUP">wso2ASResourceGroup</parameter>
+    <parameter name="AZURE_SUBSCRIPTION_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
+    <parameter name="AZURE_TENANT_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
+    <parameter name="AZURE_CLIENT_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
+    <parameter name="AZURE_CREDENTIAL">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
+    <parameter name="AZURE_RESOURCE_GROUP">wso2esbrg</parameter>
     <parameter name="AZURE_VIRTUAL_MACHINE_SCALE_SET">esbvmss</parameter>
  
 </clustering>

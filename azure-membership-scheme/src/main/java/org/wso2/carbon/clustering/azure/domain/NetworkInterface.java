@@ -15,12 +15,15 @@
 */
 package org.wso2.carbon.clustering.azure.domain;
 
+import java.util.HashMap;
+
 /**
  * Azure Network Security Group Network Interface
  */
 public class NetworkInterface {
     private String id;
     private String name;
+    private HashMap<String, String> tags;
     private NetworkInterfaceProperties properties;
 
     public String getId() {
@@ -41,6 +44,14 @@ public class NetworkInterface {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public HashMap<String, String> getTags() {
+        return tags;
+    }
+
+    public void setTags(HashMap<String, String> tags) {
+        this.tags = tags;
     }
 
     public NetworkInterfaceProperties getProperties() {
