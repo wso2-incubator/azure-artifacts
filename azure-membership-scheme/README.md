@@ -72,7 +72,7 @@ The VMSS based clustering can be used when auto scaling feature is needed. We ca
 ```xml
 <clustering class="org.wso2.carbon.core.clustering.hazelcast.HazelcastClusteringAgent" enable="true">
 
-    <parameter name="membershipSchemeClassName">com.osura.membershipscheme.azure.AzureMembershipScheme</parameter>
+    <parameter name="membershipSchemeClassName">org.wso2.carbon.clustering.azure.AzureMembershipScheme</parameter>
     <parameter name="membershipScheme">azure</parameter>
     <parameter name="AZURE_SUBSCRIPTION_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
     <parameter name="AZURE_TENANT_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
@@ -91,7 +91,7 @@ The VMSS based clustering can be used when auto scaling feature is needed. We ca
 ```xml
 <clustering class="org.wso2.carbon.core.clustering.hazelcast.HazelcastClusteringAgent" enable="true">
 
-    <parameter name="membershipSchemeClassName">com.osura.membershipscheme.azure.AzureMembershipScheme</parameter>
+    <parameter name="membershipSchemeClassName">org.wso2.carbon.clustering.azure.AzureMembershipScheme</parameter>
     <parameter name="membershipScheme">azure</parameter>
     <parameter name="AZURE_SUBSCRIPTION_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
     <parameter name="AZURE_TENANT_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
@@ -109,7 +109,7 @@ The VMSS based clustering can be used when auto scaling feature is needed. We ca
 ```xml
 <clustering class="org.wso2.carbon.core.clustering.hazelcast.HazelcastClusteringAgent" enable="true">
  
-    <parameter name="membershipSchemeClassName">com.osura.membershipscheme.azure.AzureMembershipScheme</parameter>
+    <parameter name="membershipSchemeClassName">org.wso2.carbon.clustering.azure.AzureMembershipScheme</parameter>
     <parameter name="membershipScheme">azure</parameter>
     <parameter name="AZURE_SUBSCRIPTION_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
     <parameter name="AZURE_TENANT_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
