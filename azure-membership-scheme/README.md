@@ -10,7 +10,7 @@ Once a Carbon server starts it will query Virtual Machine IP addresses in the gi
 
 1. For Azure Membership Scheme to work, Hazelcast configuration should be made pluggable. This has to be enabled in the WSO2 products in different ways. For WSO2 products that are based on Carbon 4.2.0, [apply kernel patch0012](https://docs.wso2.com/display/Carbon420/Applying+a+Patch+to+the+Kernel). For Carbon 4.4.1 based products apply [patch0005](http://product-dist.wso2.com/downloads/carbon/4.4.1/patch0005/WSO2-CARBON-PATCH-4.4.1-0005.zip). These patches include a modification in the Carbon Core component for allowing to add third party membership schemes. WSO2 products that are based on Carbon versions later than 4.4.1 do not need any patches to be applied (To determine the Carbon version of a particular product, please refer to the [WSO2 Release Matrix](http://wso2.com/products/carbon/release-matrix/)).
 
-2. Get the Azure membership scheme distribution, extract the zip file and refer it as AZURE-MEMBERSHIP-SCHEME-HOME. Copy the azure membership scheme JAR file `azure-membership-scheme-<version>.jar` in AZURE-MEMBERSHIP-SCHEME-HOME to the repository/components/lib directory of the Carbon server.
+2. Get the Azure membership scheme distribution, extract the zip file and refer it as AZURE-MEMBERSHIP-SCHEME-HOME. Copy the azure membership scheme JAR file `azure-membership-scheme-<version>.jar` in AZURE-MEMBERSHIP-SCHEME-HOME to the repository/components/dropins directory of the Carbon server.
 
 3. Copy following dependency JAR files in AZURE-MEMBERSHIP-SCHEME-HOME to the repository/components/lib directory of the Carbon server:
     * adal4j-0.0.2.jar
