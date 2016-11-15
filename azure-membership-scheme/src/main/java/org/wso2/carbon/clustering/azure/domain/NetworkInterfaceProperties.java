@@ -15,35 +15,21 @@
  */
 package org.wso2.carbon.clustering.azure.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
-import java.util.StringTokenizer;
 
 /**
- *
  * Azure NetworkSecurityGroup NetworkInterface NetworkInterfaceProperties
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class NetworkInterfaceProperties {
 
-    private List ipConfigurations;
+    private List<IPConfiguration> ipConfigurations;
 
-    public List getIpConfigurations() {
+    public List<IPConfiguration> getIpConfigurations() {
         return ipConfigurations;
     }
 
-    public void setIpConfigurations(List ipConfigurations) {
+    public void setIpConfigurations(List<IPConfiguration> ipConfigurations) {
         this.ipConfigurations = ipConfigurations;
     }
 
-    public String getIPAddress() {
-        StringTokenizer st = new StringTokenizer(getIpConfigurations().get(0).toString(), ",");
-        String ip = null;
-        for (int i = 0; i < 5; i++) {
-            ip = st.nextToken();
-        }
-        ip = ip.substring(18);
-
-        return ip;
-    }
 }

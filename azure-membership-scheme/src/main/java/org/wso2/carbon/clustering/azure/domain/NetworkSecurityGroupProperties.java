@@ -15,40 +15,28 @@
  */
 package org.wso2.carbon.clustering.azure.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 
 /**
- *
  * Azure NetworkSecurityGroup NetworkSecurityGroupProperties
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class NetworkSecurityGroupProperties {
+    private List<NetworkInterface> networkInterfaces;
 
-    private List networkInterfaces = new ArrayList();
-
-    public List getNetworkInterfaces() {
+    public List<NetworkInterface> getNetworkInterfaces() {
         return networkInterfaces;
     }
 
-    public void setNetworkInterfaces(List networkInterfaces) {
+    public void setNetworkInterfaces(List<NetworkInterface> networkInterfaces) {
         this.networkInterfaces = networkInterfaces;
     }
 
-    public List getNetworkInterfaceNames() {
-        StringTokenizer[] st = new StringTokenizer[networkInterfaces.size()];
-        String nicName = "";
-        List<String> nicNames = new ArrayList<>();
-        for (int i = 0; i < networkInterfaces.size(); i++) {
-            st[i] = new StringTokenizer(networkInterfaces.get(i).toString(), "/");
-            while (st[i].hasMoreTokens()) {
-                nicName = st[i].nextToken();
-            }
-            nicName = nicName.substring(0, nicName.length() - 1);
-            nicNames.add(nicName);
+    public List<String> getNetworkInterfaceNames() {
+        List<String> networkInterfaceNames = new ArrayList<String>();
+        for (NetworkInterface networkInterface : networkInterfaces) {
+            networkInterfaceNames.add(networkInterface.getName());
         }
-        return nicNames;
+        return networkInterfaceNames;
     }
 }

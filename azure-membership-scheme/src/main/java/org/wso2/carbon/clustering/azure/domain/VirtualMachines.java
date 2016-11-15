@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wso2.carbon.clustering.azure.exceptions;
+package org.wso2.carbon.clustering.azure.domain;
+
+import com.google.gson.annotations.SerializedName;
+
+import java.util.List;
 
 /**
- * Azure membership scheme exception
+ * Azure Virtual Machine Scale Set
  */
-public class AzureMembershipSchemeException extends Exception {
+public class VirtualMachines {
+    @SerializedName("value") private List<VirtualMachine> virtualMachines;
 
-    public AzureMembershipSchemeException(String message) {
-        super(message);
+    public List<VirtualMachine> getValue() {
+        return virtualMachines;
     }
 
-    public AzureMembershipSchemeException(String message, Throwable cause) {
-        super(message, cause);
+    public void setValue(List<VirtualMachine> virtualMachines) {
+        this.virtualMachines = virtualMachines;
     }
 }

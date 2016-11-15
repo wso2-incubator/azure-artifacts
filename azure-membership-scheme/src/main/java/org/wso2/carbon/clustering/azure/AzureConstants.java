@@ -16,27 +16,39 @@
 package org.wso2.carbon.clustering.azure;
 
 /**
- *
  * AzureConstants for Azure membership scheme
  */
 public class AzureConstants {
 
-    public final static String AUTHORIZATION_ENDPOINT = "https://login.microsoftonline.com";
-    public final static String ARM_ENDPOINT = "https://management.azure.com";
+    public final static String DEFAULT_AUTHORIZATION_ENDPOINT = "https://login.microsoftonline.com";
+    public final static String DEFAULT_ARM_ENDPOINT = "https://management.azure.com";
+    public final static String AUTHORIZATION_HEADER = "Authorization";
+    public final static String API_VERSION_QUERY_PARAM = "api-version=";
 
-    public final static String NETWORK_SECURITY_GROUPS_RESOURCE = "/subscriptions/%s/resourceGroups/%s/providers/" +
-            "Microsoft.Network/networkSecurityGroups/%s?api-version=2016-03-30";
-    public final static String NETWORK_INTERFACES_RESOURCE = "/subscriptions/%s/resourceGroups/%s/providers/" +
-            "Microsoft.Network/networkInterfaces/%s?api-version=2016-03-30";
-    public final static String TAGS_RESOURCE = "/subscriptions/%s/resources?$filter=tagname+eq+'%s'&api-version=2015-01-01";
+    public final static String NETWORK_SECURITY_GROUPS_RESOURCE =
+            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/networkSecurityGroups/%s";
+    public final static String NETWORK_INTERFACES_RESOURCE = "/subscriptions/%s/resourceGroups/%s/providers/Microsoft"
+            + ".Network/networkInterfaces/%s";
+    public final static String VIRTUAL_MACHINE_SCALE_SET_VIRTUAL_MACHINES_RESOURCE =
+            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachineScaleSets/%s/virtualMachines";
+    public final static String VIRTUAL_MACHINE_SCALE_SET_NETWORK_INTERFACES_RESOURCE =
+            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft"
+                    + ".Compute/virtualMachineScaleSets/%s/virtualMachines/%s/networkInterfaces/%s";
+    public final static String DEFAULT_AZURE_API_VERSION = "2016-03-30";
 
-    public final static String AZURE_USERNAME = "azure_username";
-    public final static String CREDENTIAL = "credential";
-    public final static String TENANT_ID = "tenantId";
-    public final static String CLIENT_ID = "clientId";
-    public final static String SUBSCRIPTION_ID = "subscriptionId";
-    public final static String RESOURCE_GROUP = "resourceGroup";
-    public final static String NETWORK_SECURITY_GROUP = "networkSecurityGroup";
-    public final static String NETWORK_INTERFACE_TAG = "networkInterfaceTag";
-    public final static String VALIDATION_AUTHORITY = "validationAuthority";
+    public final static String AZURE_API_VERSION = "AZURE_API_VERSION";
+    public final static String AUTHORIZATION_ENDPOINT = "AUTHORIZATION_ENDPOINT";
+    public final static String ARM_ENDPOINT = "ARM_ENDPOINT";
+    public final static String AZURE_USERNAME = "AZURE_USERNAME";
+    public final static String AZURE_CREDENTIAL = "AZURE_CREDENTIAL";
+    public final static String AZURE_TENANT_ID = "AZURE_TENANT_ID";
+    public final static String AZURE_CLIENT_ID = "AZURE_CLIENT_ID";
+    public final static String AZURE_SUBSCRIPTION_ID = "AZURE_SUBSCRIPTION_ID";
+    public final static String AZURE_RESOURCE_GROUP = "AZURE_RESOURCE_GROUP";
+    public final static String AZURE_NETWORK_SECURITY_GROUP = "AZURE_NETWORK_SECURITY_GROUP";
+    public final static String AZURE_NETWORK_INTERFACE_TAG_KEY = "AZURE_NETWORK_INTERFACE_TAG_KEY";
+    public final static String AZURE_NETWORK_INTERFACE_TAG_VALUE = "AZURE_NETWORK_INTERFACE_TAG_VALUE";
+    public final static String AZURE_VIRTUAL_MACHINE_SCALE_SET = "AZURE_VIRTUAL_MACHINE_SCALE_SET";
+    public final static String AZURE_VALIDATE_AUTHORITY = "AZURE_VALIDATE_AUTHORITY";
+
 }

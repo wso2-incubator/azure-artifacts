@@ -15,18 +15,28 @@
  */
 package org.wso2.carbon.clustering.azure.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Azure NetworkSecurityGroup
+ * Azure Network Profile
  */
-public class NetworkSecurityGroup {
+public class NetworkProfile {
+    private List<NetworkInterface> networkInterfaces;
 
-    private NetworkSecurityGroupProperties properties;
-
-    public NetworkSecurityGroupProperties getProperties() {
-        return properties;
+    public List<NetworkInterface> getNetworkInterfaces() {
+        return networkInterfaces;
     }
 
-    public void setProperties(NetworkSecurityGroupProperties properties) {
-        this.properties = properties;
+    public void setNetworkInterfaces(List<NetworkInterface> networkInterfaces) {
+        this.networkInterfaces = networkInterfaces;
+    }
+
+    public List<String> getNetworkInterfaceNames() {
+        List<String> networkInterfaceNames = new ArrayList<String>();
+        for (NetworkInterface networkInterface : networkInterfaces) {
+            networkInterfaceNames.add(networkInterface.getName());
+        }
+        return networkInterfaceNames;
     }
 }
