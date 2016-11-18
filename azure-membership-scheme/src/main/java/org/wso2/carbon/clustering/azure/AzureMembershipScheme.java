@@ -106,25 +106,26 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             String networkSecurityGroup = getConstant(AzureConstants.AZURE_NETWORK_SECURITY_GROUP, "", true);
             String networkInterfaceTagKey = getConstant(AzureConstants.AZURE_NETWORK_INTERFACE_TAG_KEY, "", true);
             String networkInterfaceTagValue = getConstant(AzureConstants.AZURE_NETWORK_INTERFACE_TAG_VALUE, "", true);
-            String virtualMachineScaleSet = getConstant(AzureConstants.AZURE_VIRTUAL_MACHINE_SCALE_SET, "", true);
+            String virtualMachineScaleSets = getConstant(AzureConstants.AZURE_VIRTUAL_MACHINE_SCALE_SETS, "", true);
             boolean validateAuthority = Boolean
                     .parseBoolean(getConstant(AzureConstants.AZURE_VALIDATE_AUTHORITY, "false", true));
 
-            if (networkSecurityGroup == null && virtualMachineScaleSet == null) {
+            if (networkSecurityGroup == null && virtualMachineScaleSets == null) {
                 throw new ClusteringFault(String.format("Both %s and %s params are empty. Define at least one of them",
-                        AzureConstants.AZURE_NETWORK_SECURITY_GROUP, AzureConstants.AZURE_VIRTUAL_MACHINE_SCALE_SET));
+                        AzureConstants.AZURE_NETWORK_SECURITY_GROUP, AzureConstants.AZURE_VIRTUAL_MACHINE_SCALE_SETS));
             }
+
+            log.info(String.format("Azure clustering configuration: [authorization-endpoint] %s , [arm-endpoint] %s , "
+                    + "[tenant-id] %s , [client-id] %s", authorizationEndPoint, ARMEndPoint, tenantId, clientId));
 
             AuthenticationResult authResult = Authentication
                     .getAuthToken(authorizationEndPoint, username, credential, tenantId, clientId, validateAuthority,
                             ARMEndPoint);
-            log.info(String.format("Azure clustering configuration: [authorization-endpoint] %s , [arm-endpoint] %s , "
-                    + "[tenant-id] %s , [client-id] %s", authorizationEndPoint, ARMEndPoint, tenantId, clientId));
 
             if (authResult != null && StringUtils.isNotEmpty(authResult.getAccessToken())) {
                 List<String> ipAddresses = findIPAddresses(ARMEndPoint, azureAPIVersion, authResult.getAccessToken(),
                         subscriptionId, resourceGroup, networkSecurityGroup, networkInterfaceTagKey,
-                        networkInterfaceTagValue, virtualMachineScaleSet);
+                        networkInterfaceTagValue, virtualMachineScaleSets);
                 for (Object IPAddress : ipAddresses) {
                     nwConfig.getJoin().getTcpIpConfig().addMember(IPAddress.toString());
                     log.info(String.format("Member added to cluster configuration: [ip-address] %s",
@@ -140,12 +141,12 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
 
     private List<String> findIPAddresses(String ARMEndPoint, String azureAPIVersion, String accessToken,
             String subscriptionID, String resourceGroup, String networkSecurityGroup, String networkInterfaceTagKey,
-            String networkInterfaceTagValue, String virtualMachineScaleSet) throws AzureMembershipSchemeException {
+            String networkInterfaceTagValue, String virtualMachineScaleSets) throws AzureMembershipSchemeException {
 
         List<String> ipAddresses = new ArrayList<>();
         Gson gson = new GsonBuilder().create();
 
-        if ((StringUtils.isNotEmpty(networkSecurityGroup)) && (StringUtils.isEmpty(virtualMachineScaleSet))) {
+        if ((StringUtils.isNotEmpty(networkSecurityGroup)) && (StringUtils.isEmpty(virtualMachineScaleSets))) {
 
             // Find IP addresses based on network security group
 
@@ -206,43 +207,43 @@ public class AzureMembershipScheme implements HazelcastMembershipScheme {
             } catch (IOException ex) {
                 throw new AzureMembershipSchemeException("Could not find VM IP addresses", ex);
             }
-        } else if ((StringUtils.isNotEmpty(virtualMachineScaleSet)) && (StringUtils.isEmpty(networkSecurityGroup))) {
+        } else if ((StringUtils.isNotEmpty(virtualMachineScaleSets)) && (StringUtils.isEmpty(networkSecurityGroup))) {
+
+            // Get list of vmss provided
+            String [] vmss = virtualMachineScaleSets.split(",");
 
             // Find members' IP addresses based on virtual machine scale set
-
             try {
-                // Get virtual machines belongs to a specific virtualMachineScaleSet
-                String url = ARMEndPoint + String
-                        .format(AzureConstants.VIRTUAL_MACHINE_SCALE_SET_VIRTUAL_MACHINES_RESOURCE, subscriptionID,
-                                resourceGroup, virtualMachineScaleSet) + "?" + AzureConstants.API_VERSION_QUERY_PARAM
-                        + azureAPIVersion;
-                VirtualMachines virtualMachines = gson
-                        .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)), VirtualMachines.class);
+                for(String virtualMachineScaleSet : vmss) {
+                    // Get virtual machines belongs to a specific virtualMachineScaleSet
+                    String url = ARMEndPoint + String
+                            .format(AzureConstants.VIRTUAL_MACHINE_SCALE_SET_VIRTUAL_MACHINES_RESOURCE, subscriptionID,
+                                    resourceGroup, virtualMachineScaleSet) + "?" + AzureConstants.API_VERSION_QUERY_PARAM
+                            + azureAPIVersion;
+                    VirtualMachines virtualMachines = gson
+                            .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)), VirtualMachines.class);
 
-                // Get network interfaces' IP address
-                for (VirtualMachine virtualMachine : virtualMachines.getValue()) {
-                    if (virtualMachine.getProperties().getNetworkProfile() == null) {
-                        log.warn(String.format("Could not find VMs belongs to [virtual-machine-scale-set] %s",
-                                virtualMachineScaleSet));
-                    } else {
-                        for (String networkInterfaceName : virtualMachine.getProperties().getNetworkProfile()
-                                .getNetworkInterfaceNames()) {
-                            url = ARMEndPoint + String
-                                    .format(AzureConstants.VIRTUAL_MACHINE_SCALE_SET_NETWORK_INTERFACES_RESOURCE,
-                                            subscriptionID, resourceGroup, virtualMachineScaleSet,
-                                            virtualMachine.getInstanceId(), networkInterfaceName) + "?"
-                                    + AzureConstants.API_VERSION_QUERY_PARAM + azureAPIVersion;
-                            NetworkInterface networkInterface = gson
-                                    .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)),
-                                            NetworkInterface.class);
-                            if (networkInterface.getProperties().getIpConfigurations() == null) {
-                                log.warn(String.format(
-                                        "Could not find IP addresses of VMs belongs to [virtual-machine-scale-set] %s",
-                                        virtualMachineScaleSet));
-                            } else {
-                                for (IPConfiguration ipConfig : networkInterface.getProperties()
-                                        .getIpConfigurations()) {
-                                    ipAddresses.add(ipConfig.getIpConfigurationProperties().getPrivateIPAddress());
+                    // Get network interfaces' IP address
+                    for (VirtualMachine virtualMachine : virtualMachines.getValue()) {
+                        if (virtualMachine.getProperties().getNetworkProfile() == null) {
+                            log.warn(String.format("Could not find VMs belongs to [virtual-machine-scale-set] %s",
+                                    virtualMachineScaleSet));
+                        } else {
+                            for (String networkInterfaceName : virtualMachine.getProperties().getNetworkProfile().getNetworkInterfaceNames()) {
+                                url = ARMEndPoint + String.format(AzureConstants.VIRTUAL_MACHINE_SCALE_SET_NETWORK_INTERFACES_RESOURCE,
+                                        subscriptionID, resourceGroup, virtualMachineScaleSet, virtualMachine.getInstanceId(), networkInterfaceName) + "?"
+                                        + AzureConstants.API_VERSION_QUERY_PARAM + azureAPIVersion;
+                                NetworkInterface networkInterface = gson
+                                        .fromJson(inputStreamToString(invokeGetMethod(url, accessToken)),
+                                                NetworkInterface.class);
+                                if (networkInterface.getProperties().getIpConfigurations() == null) {
+                                    log.warn(String.format(
+                                            "Could not find IP addresses of VMs belongs to [virtual-machine-scale-set] %s",
+                                            virtualMachineScaleSet));
+                                } else {
+                                    for (IPConfiguration ipConfig : networkInterface.getProperties().getIpConfigurations()) {
+                                        ipAddresses.add(ipConfig.getIpConfigurationProperties().getPrivateIPAddress());
+                                    }
                                 }
                             }
                         }

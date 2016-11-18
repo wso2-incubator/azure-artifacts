@@ -31,7 +31,7 @@ Once a Carbon server starts it will query Virtual Machine IP addresses in the gi
     <parameter name="AZURE_RESOURCE_GROUP">Azure Resource Group in which your cluster is deployed</parameter>
     <parameter name="AZURE_NETWORK_SECURITY_GROUP">Azure Network Security Group of cluster VMs</parameter>
     <parameter name="AZURE_NETWORK_INTERFACE_TAG">Azure Network Interface Tag name of the VMs in the cluster</parameter>
-    <parameter name="AZURE_VIRTUAL_MACHINE_SCALE_SET">Azure Virtual Machine Scale Set name to which the cluster VMs belongs to</parameter>
+    <parameter name="AZURE_VIRTUAL_MACHINE_SCALE_SETS">Azure Virtual Machine Scale Set names to which the cluster VMs belongs to</parameter>
   
 </clustering> 
 ```
@@ -60,7 +60,7 @@ The VMSS based clustering can be used when auto scaling feature is needed. We ca
     2. AZURE_NETWORK_SECURITY_GROUP - Azure Network Security Group where relevant VMs are added to
     3. AZURE_NETWORK_INTERFACE_TAG_KEY - Azure Tag name of the NSG's Network Interface (optional)
     4. AZURE_NETWORK_INTERFACE_TAG_VALUE - Azure Tag value of the NSG's Network Interface (optional)
-    5. AZURE_VIRTUAL_MACHINE_SCALE_SET - Azure Virtual Machine Scale Set name to which the cluster VMs belongs to
+    5. AZURE_VIRTUAL_MACHINE_SCALE_SETS - Azure Virtual Machine Scale Set names to which the cluster VMs belongs to
 
 
 ####Sample clustering configuration
@@ -116,7 +116,7 @@ The VMSS based clustering can be used when auto scaling feature is needed. We ca
     <parameter name="AZURE_CLIENT_ID">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
     <parameter name="AZURE_CREDENTIAL">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</parameter>
     <parameter name="AZURE_RESOURCE_GROUP">wso2esbrg</parameter>
-    <parameter name="AZURE_VIRTUAL_MACHINE_SCALE_SET">esbvmss</parameter>
+    <parameter name="AZURE_VIRTUAL_MACHINE_SCALE_SETS">esbmrvmss, esbwrvmss</parameter>
  
 </clustering>
 ```
